@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Манго-кликер!</title>
+
+  <!-- SVG ИКОНКА МАНГО (favicon) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='m' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23ffd54f'/%3E%3Cstop offset='40%25' stop-color='%23ffa726'/%3E%3Cstop offset='80%25' stop-color='%23ef6c00'/%3E%3Cstop offset='100%25' stop-color='%23bf360c'/%3E%3C/radialGradient%3E%3CradialGradient id='h' cx='35%25' cy='25%25' r='30%25'%3E%3Cstop offset='0%25' stop-color='%23fff9c4' stop-opacity='0.9'/%3E%3Cstop offset='100%25' stop-color='%23fff9c4' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='l' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234caf50'/%3E%3Cstop offset='100%25' stop-color='%232e7d32'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cellipse cx='50' cy='55' rx='38' ry='40' fill='url(%23m)'/%3E%3Cellipse cx='38' cy='40' rx='15' ry='12' fill='url(%23h)'/%3E%3Cpath d='M50 18 Q45 10 52 8 Q58 6 60 12 Q62 18 56 20 Z' fill='url(%23l)'/%3E%3Ccircle cx='50' cy='17' r='2' fill='%23795548'/%3E%3C/svg%3E">
+
+  <!-- Apple touch icon -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='m' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23ffd54f'/%3E%3Cstop offset='40%25' stop-color='%23ffa726'/%3E%3Cstop offset='80%25' stop-color='%23ef6c00'/%3E%3Cstop offset='100%25' stop-color='%23bf360c'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='%230a0a0f' rx='20'/%3E%3Cellipse cx='50' cy='55' rx='35' ry='37' fill='url(%23m)'/%3E%3Cpath d='M50 18 Q45 10 52 8 Q58 6 60 12 Q62 18 56 20 Z' fill='%234caf50'/%3E%3C/svg%3E">
+
+  <!-- Meta для соцсетей -->
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="MangoClicker — самая сочная кликер-игра! Собирай манго, прокачивай скины и доминируй!">
+  <meta property="og:title" content="🥭 MangoClicker">
+  <meta property="og:description" content="Нажимай. Собирай. Доминируй. Самая сочная кликер-игра!">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+  <!-- LOADER -->
+  <div id="loader" class="loader">
+    <div class="loader-content">
+      <div class="loader-mango">🥭</div>
+      <div class="loader-text">MangoClicker</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen auth-screen hidden">
+    <div class="auth-container">
+      <div class="auth-logo">🥭</div>
+      <h1 class="auth-title">MangoClicker</h1>
+      <p class="auth-subtitle">Нажимай. Собирай. Доминируй.</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Вход</button>
+        <button class="auth-tab" data-tab="register">Регистрация</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <div class="input-group">
+          <span class="material-icons-round">email</span>
+          <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round">lock</span>
+          <input type="password" id="login-password" placeholder="Пароль" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Войти</button>
+      </form>
+
+      <form id="register-form" class="auth-form hidden">
+        <div class="input-group">
+          <span class="material-icons-round">person</span>
+          <input type="text" id="register-name" placeholder="Имя" required minlength="2" maxlength="20">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round">email</span>
+          <input type="email" id="register-email" placeholder="Email" required>
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round">lock</span>
+          <input type="password" id="register-password" placeholder="Пароль (мин. 8 символов)" required minlength="8">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round">lock</span>
+          <input type="password" id="register-password-confirm" placeholder="Повторите пароль" required minlength="8">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+      </form>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <!-- Футер для auth-экрана -->
+      <div class="auth-footer">
+        <div class="auth-footer-text">© 2026 <strong>NULLER Company</strong></div>
+        <div class="auth-footer-links">
+          <button class="footer-link" id="btn-privacy-auth">Конфиденциальность</button>
+          <span>•</span>
+          <button class="footer-link" id="btn-terms-auth">Условия</button>
+          <span>•</span>
+          <button class="footer-link" id="btn-trademark-auth">™</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen game-screen hidden">
+
+    <!-- ВЕРХНИЙ ФУТЕР (БРЕНДИНГ) -->
+    <div class="brand-bar">
+      <div class="brand-left">
+        <span class="brand-logo">🥭</span>
+        <div>
+          <div class="brand-title">MangoClicker™</div>
+          <div class="brand-copyright">© 2026 NULLER Company</div>
+        </div>
+      </div>
+      <div class="brand-right">
+        <button class="footer-link" id="btn-privacy">Политика конфиденциальности</button>
+        <span class="footer-separator">•</span>
+        <button class="footer-link" id="btn-terms">Условия использования</button>
+        <span class="footer-separator">•</span>
+        <button class="footer-link" id="btn-trademark">Товарный знак</button>
+      </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <div class="user-info">
+          <span class="user-avatar">🥭</span>
+          <div>
+            <span class="user-name" id="user-name">Player</span>
+            <span class="user-level" id="user-level-badge">Ур. 1</span>
+          </div>
+        </div>
+      </div>
+      <div class="top-bar-center">
+        <div class="score-display">
+          <span class="score-icon">🥭</span>
+          <span class="score-value" id="score-display">0</span>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <div class="global-counter">
+          <span class="material-icons-round">public</span>
+          <span id="global-clicks">0</span>
+          <span style="font-size:11px;color:var(--text-muted);">всего</span>
+        </div>
+        <button class="btn-icon" id="btn-logout" title="Выход">
+          <span class="material-icons-round">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-section-title">Главное</div>
+      <button class="nav-btn active" data-panel="click">
+        <span class="material-icons-round">touch_app</span>
+        <span class="nav-text">Кликер</span>
+      </button>
+
+      <div class="sidebar-section-title">Прогресс</div>
+      <button class="nav-btn" data-panel="shop">
+        <span class="material-icons-round">storefront</span>
+        <span class="nav-text">Магазин</span>
+      </button>
+      <button class="nav-btn" data-panel="inventory">
+        <span class="material-icons-round">inventory_2</span>
+        <span class="nav-text">Инвентарь</span>
+      </button>
+      <button class="nav-btn" data-panel="crafting">
+        <span class="material-icons-round">construction</span>
+        <span class="nav-text">Крафт</span>
+      </button>
+
+      <div class="sidebar-section-title">Сообщество</div>
+      <button class="nav-btn" data-panel="trading">
+        <span class="material-icons-round">swap_horiz</span>
+        <span class="nav-text">Маркет</span>
+      </button>
+      <button class="nav-btn notification-dot" data-panel="rewards" id="nav-rewards">
+        <span class="material-icons-round">card_giftcard</span>
+        <span class="nav-text">Награды</span>
+      </button>
+    </nav>
+
+    <!-- MAIN AREA -->
+    <main class="main-area">
+      <div class="stats-bar">
+        <div class="stat-box">
+          <div class="stat-box-header">
+            <span class="label">⚡ Энергия</span>
+            <span class="value" id="energy-text">100/100</span>
+          </div>
+          <div class="stat-bar-container">
+            <div class="stat-bar-fill energy-fill" id="energy-bar-fill" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-header">
+            <span class="label">🌱 <span id="level-name">Семечко</span></span>
+            <span class="value" id="level-progress-text">0/100</span>
+          </div>
+          <div class="stat-bar-container">
+            <div class="stat-bar-fill level-fill" id="level-bar-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="mango-container" id="mango-container">
+          <div class="mango-glow" id="mango-glow"></div>
+          <button class="mango-button" id="mango-button">
+            <span class="mango-emoji" id="mango-emoji">🥭</span>
+          </button>
+          <div class="click-particles" id="click-particles"></div>
+        </div>
+
+        <div class="click-info">
+          <span id="click-power-display">+1 за клик</span>
+          <span id="auto-click-display" class="hidden">⚙️ 0/сек</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- PANELS -->
+    <div class="panel hidden" id="panel-shop">
+      <div class="panel-header">
+        <h2>🏪 Магазин</h2>
+        <button class="btn-close-panel" data-close>
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-shop-tab="skins">🥭 Манго</button>
+        <button class="panel-tab" data-shop-tab="upgrades">⚡ Улучшения</button>
+        <button class="panel-tab" data-shop-tab="accessories">👑 Аксессуары</button>
+        <button class="panel-tab" data-shop-tab="pets">🐱 Питомцы</button>
+        <button class="panel-tab" data-shop-tab="backgrounds">🌌 Фоны</button>
+        <button class="panel-tab" data-shop-tab="effects">✨ Эффекты</button>
+        <button class="panel-tab" data-shop-tab="other">🎵 Прочее</button>
+      </div>
+      <div class="panel-content" id="shop-items"></div>
+    </div>
+
+    <div class="panel hidden" id="panel-inventory">
+      <div class="panel-header">
+        <h2>🎒 Инвентарь</h2>
+        <button class="btn-close-panel" data-close>
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-inv-tab="all">Все</button>
+        <button class="panel-tab" data-inv-tab="skins">🥭 Манго</button>
+        <button class="panel-tab" data-inv-tab="upgrades">⚡ Улучшения</button>
+        <button class="panel-tab" data-inv-tab="accessories">👑 Аксессуары</button>
+        <button class="panel-tab" data-inv-tab="other">🎁 Прочее</button>
+      </div>
+      <div class="panel-content" id="inventory-items"></div>
+    </div>
+
+    <div class="panel hidden" id="panel-crafting">
+      <div class="panel-header">
+        <h2>🔨 Крафт</h2>
+        <button class="btn-close-panel" data-close>
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="panel-content" id="crafting-recipes"></div>
+    </div>
+
+    <div class="panel hidden" id="panel-trading">
+      <div class="panel-header">
+        <h2>💱 Маркет</h2>
+        <button class="btn-close-panel" data-close>
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-trade-tab="market">🛒 Маркет</button>
+        <button class="panel-tab" data-trade-tab="sell">📤 Продать</button>
+        <button class="panel-tab" data-trade-tab="my-offers">📋 Мои лоты</button>
+      </div>
+      <div class="panel-content" id="trading-content"></div>
+    </div>
+
+    <div class="panel hidden" id="panel-rewards">
+      <div class="panel-header">
+        <h2>🎁 Награды</h2>
+        <button class="btn-close-panel" data-close>
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="panel-content" id="rewards-content"></div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button class="btn-close-modal" id="btn-close-modal">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="notifications" id="notifications"></div>
+
+  <!-- DROP REVEAL -->
+  <div class="drop-reveal hidden" id="drop-reveal">
+    <div class="drop-reveal-content">
+      <div class="drop-reveal-glow" id="drop-glow"></div>
+      <div class="drop-reveal-emoji" id="drop-emoji"></div>
+      <div class="drop-reveal-name" id="drop-name"></div>
+      <div class="drop-reveal-rarity" id="drop-rarity"></div>
+      <button class="btn btn-primary" id="drop-claim">Забрать!</button>
+    </div>
+  </div>
+
+  <!-- POLICY MODAL -->
+  <div class="policy-modal-overlay hidden" id="policy-modal">
+    <div class="policy-modal">
+      <div class="policy-modal-header">
+        <h2 id="policy-title">Политика</h2>
+        <button class="btn-close-modal" id="btn-close-policy">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="policy-modal-body" id="policy-body"></div>
+      <div class="policy-modal-footer">
+        <button class="btn btn-primary" id="btn-accept-policy">Понятно</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
