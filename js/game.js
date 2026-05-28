@@ -387,6 +387,11 @@ export class GameEngine {
       this.updateMangoSkinEmoji();
     }
 
+    // Обновляем ауры
+    if (this.mango3D) {
+      this.mango3D.setAuras(data.equippedAccessories || []);
+    }
+
     // Обновляем свечение
     const skin = MANGO_SKINS.find(s => s.id === equippedId) || MANGO_SKINS[0];
     const glowEl = document.getElementById('mango-glow');
