@@ -2,15 +2,15 @@
 
 import { db, doc, updateDoc } from './firebase-config.js';
 import { MANGO_LEVELS, MANGO_SKINS, RARITIES } from './items-database.js';
+import { Mango3D } from './mango3d.js';
+import { EffectsManager } from './effects.js';
 
-// Приватные данные через WeakMap (нельзя изменить через консоль)
 const _state = new WeakMap();
 
 export class GameEngine {
   constructor(app) {
     this.app = app;
 
-    // Приватное состояние
     _state.set(this, {
       lastClickTime: 0,
       lastSecondClicks: [],
@@ -21,7 +21,6 @@ export class GameEngine {
       isLocked: false
     });
 
-    // КОНСТАНТЫ — не меняются
     Object.defineProperty(this, 'MIN_CLICK_INTERVAL', { value: 50, writable: false });
     Object.defineProperty(this, 'MAX_CLICKS_PER_SECOND', { value: 25, writable: false });
     Object.defineProperty(this, 'MAX_PENDING_BATCH', { value: 100, writable: false });
@@ -30,13 +29,39 @@ export class GameEngine {
     this.autoClickInterval = null;
     this.saveInterval = null;
     this.isSetup = false;
+    this.mango3D = null;
+    this.effectsManager = null;
+    this.use3D = true; // Используем 3D манго
 
     this.setup();
     this.startEnergyRegen();
     this.startAutoClick();
     this.startAutoSave();
-    this.updateMangoSkin();
+    this.init3D();
+    this.initEffects();
     this.updateLevelDisplay();
+  }
+
+  async init3D() {
+    if (!this.use3D) return;
+    try {
+      this.mango3D = new Mango3D('mango-container');
+      await this.mango3D.init();
+      this.updateMangoSkin();
+
+      // Скрываем emoji манго (теперь 3D)
+      const emojiEl = document.getElementById('mango-emoji');
+      if (emojiEl) emojiEl.style.display = 'none';
+    } catch (e) {
+      console.error('3D init error, falling back to emoji:', e);
+      this.use3D = false;
+      this.updateMangoSkinEmoji();
+    }
+  }
+
+  initEffects() {
+    this.effectsManager = new EffectsManager(this.app);
+    this.effectsManager.refresh();
   }
 
   setup() {
@@ -45,11 +70,8 @@ export class GameEngine {
 
     const mangoBtn = document.getElementById('mango-button');
 
-    // Используем isTrusted для проверки настоящего клика
     mangoBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      // ВАЖНО: e.isTrusted = true только если клик от пользователя,
-      // а не от скрипта (.click() из консоли)
       this.handleClick(e);
     });
 
@@ -61,58 +83,40 @@ export class GameEngine {
 
   handleClick(e) {
     const state = _state.get(this);
-    if (state.isLocked) {
-      this.app.notify('Аккаунт временно заблокирован', 'error');
-      return;
-    }
+    if (state.isLocked) return;
 
-    // АНТИЧИТ 1: Проверка isTrusted (защита от программных кликов)
     if (e && e.isTrusted === false) {
       state.suspiciousActivity++;
-      console.warn('Suspicious click detected (not trusted)');
-      if (state.suspiciousActivity > 5) {
-        this.lockAccount();
-      }
+      if (state.suspiciousActivity > 5) this.lockAccount();
       return;
     }
 
     const now = Date.now();
-
-    // АНТИЧИТ 2: Минимальный интервал между кликами
-    if (now - state.lastClickTime < this.MIN_CLICK_INTERVAL) {
-      return;
-    }
+    if (now - state.lastClickTime < this.MIN_CLICK_INTERVAL) return;
     state.lastClickTime = now;
 
-    // АНТИЧИТ 3: Лимит кликов в секунду (защита от автокликеров)
     state.lastSecondClicks = state.lastSecondClicks.filter(t => now - t < 1000);
     state.lastSecondClicks.push(now);
 
     if (state.lastSecondClicks.length > this.MAX_CLICKS_PER_SECOND) {
       state.suspiciousActivity++;
-      this.app.notify('⚠️ Слишком быстро! Замедлитесь.', 'warning');
-      if (state.suspiciousActivity > 10) {
-        this.lockAccount();
-      }
+      this.app.notify('⚠️ Слишком быстро!', 'warning');
+      if (state.suspiciousActivity > 10) this.lockAccount();
       return;
     }
 
     const data = this.app.userData;
     if (!data) return;
 
-    // АНТИЧИТ 4: Проверка энергии (нельзя минусовать)
     if (data.energy < 1) {
       this.shakeButton();
       return;
     }
 
-    // АНТИЧИТ 5: Защита от чрезмерных значений
     let clickPower = data.clickPower || 1;
-    if (clickPower < 1) clickPower = 1;
-    if (clickPower > 100000) clickPower = 100000; // лимит
+    if (clickPower > 100000) clickPower = 100000;
 
     let multiplier = data.multiplier || 1;
-    if (multiplier < 1) multiplier = 1;
     if (multiplier > 10000) multiplier = 10000;
 
     let clickValue = clickPower;
@@ -127,9 +131,8 @@ export class GameEngine {
 
     clickValue = Math.floor(clickValue * multiplier);
     if (clickValue < 1) clickValue = 1;
-    if (clickValue > 100000000) clickValue = 100000000; // абсолютный лимит
+    if (clickValue > 100000000) clickValue = 100000000;
 
-    // Применяем
     data.score += clickValue;
     data.energy = Math.max(0, data.energy - 1);
     data.totalClicks = (data.totalClicks || 0) + 1;
@@ -137,22 +140,37 @@ export class GameEngine {
     state.pendingScore += clickValue;
     state.pendingClicks += 1;
 
-    // Принудительное сохранение если накопилось много
     if (state.pendingClicks >= this.MAX_PENDING_BATCH) {
       this.forceSave();
     }
 
     this.spawnParticle(clickValue, isCrit);
     this.animateMango();
+
+    // 3D эффект клика
+    if (this.mango3D) this.mango3D.pulse();
+
+    // Звук клика
+    if (this.app.musicManager && this.app.musicManager.audioCtx && this.app.musicManager.isPlaying) {
+      this.app.musicManager.playClickSound();
+    }
+
+    // Эффект клика (если экипирован)
+    if (this.effectsManager && data.equippedEffect) {
+      const rect = document.getElementById('mango-container').getBoundingClientRect();
+      const x = rect.left + rect.width / 2 + (Math.random() - 0.5) * 100;
+      const y = rect.top + rect.height / 2 + (Math.random() - 0.5) * 100;
+      this.effectsManager.spawnClickEffect(x, y, data.equippedEffect);
+    }
+
     this.checkLevel();
     this.app.updateUI();
   }
 
-  // Блокировка аккаунта при подозрительной активности
   lockAccount() {
     const state = _state.get(this);
     state.isLocked = true;
-    this.app.notify('🚫 Обнаружена подозрительная активность. Перезагрузите страницу.', 'error', 10000);
+    this.app.notify('🚫 Подозрительная активность. Перезагрузите страницу.', 'error', 10000);
     if (this.energyInterval) clearInterval(this.energyInterval);
     if (this.autoClickInterval) clearInterval(this.autoClickInterval);
     if (this.saveInterval) clearInterval(this.saveInterval);
@@ -164,7 +182,6 @@ export class GameEngine {
 
     const particle = document.createElement('div');
     particle.className = `click-particle${isCrit ? ' crit' : ''}`;
-    // Используем textContent (защита от XSS)
     particle.textContent = `+${this.app.formatNumber(value)}${isCrit ? ' КРИТ!' : ''}`;
 
     const offsetX = (Math.random() - 0.5) * 120;
@@ -179,7 +196,6 @@ export class GameEngine {
       if (particle.parentNode) particle.remove();
     }, 1000);
 
-    // Ограничение количества частиц на экране
     const allParticles = container.querySelectorAll('.click-particle');
     if (allParticles.length > 30) {
       for (let i = 0; i < allParticles.length - 30; i++) {
@@ -191,18 +207,15 @@ export class GameEngine {
   animateMango() {
     const btn = document.getElementById('mango-button');
     if (!btn) return;
-
     btn.classList.remove('clicked');
     void btn.offsetWidth;
     btn.classList.add('clicked');
-
     setTimeout(() => btn.classList.remove('clicked'), 150);
   }
 
   shakeButton() {
     const btn = document.getElementById('mango-button');
     if (!btn) return;
-
     btn.style.animation = 'none';
     void btn.offsetWidth;
     btn.style.animation = 'shake 0.4s ease';
@@ -214,7 +227,6 @@ export class GameEngine {
       const data = this.app.userData;
       if (!data) return;
 
-      // Защита от манипуляций
       const maxEnergy = Math.min(100000, Math.max(100, data.maxEnergy || 100));
       const regenRate = Math.min(1000, Math.max(0, data.energyRegen || 2));
 
@@ -254,7 +266,6 @@ export class GameEngine {
   spawnAutoParticle(value) {
     const container = document.getElementById('click-particles');
     if (!container) return;
-
     const particle = document.createElement('div');
     particle.className = 'click-particle';
     particle.textContent = `⚙️+${this.app.formatNumber(value)}`;
@@ -262,11 +273,8 @@ export class GameEngine {
     particle.style.top = '70%';
     particle.style.fontSize = '14px';
     particle.style.opacity = '0.7';
-
     container.appendChild(particle);
-    setTimeout(() => {
-      if (particle.parentNode) particle.remove();
-    }, 1000);
+    setTimeout(() => { if (particle.parentNode) particle.remove(); }, 1000);
   }
 
   startAutoSave() {
@@ -282,10 +290,8 @@ export class GameEngine {
     const data = this.app.userData;
     if (!data || !this.app.user) return;
 
-    // АНТИЧИТ: проверяем что прирост разумный
     const scoreDelta = data.score - state.lastSavedScore;
     if (scoreDelta > 10000000) {
-      console.warn('Suspicious score increase:', scoreDelta);
       state.suspiciousActivity++;
       if (state.suspiciousActivity > 3) {
         this.lockAccount();
@@ -302,7 +308,6 @@ export class GameEngine {
       });
 
       if (state.pendingClicks > 0) {
-        // Ограничиваем максимум 100 кликов за обновление
         const clicksToAdd = Math.min(100, state.pendingClicks);
         this.app.incrementGlobalClicks(clicksToAdd);
       }
@@ -312,24 +317,17 @@ export class GameEngine {
       state.pendingClicks = 0;
     } catch (error) {
       console.error('Save error:', error);
-      // Если сервер отклонил — откатываем
-      if (error.code === 'permission-denied') {
-        this.app.notify('Ошибка сохранения. Перезагрузите страницу.', 'error');
-        this.lockAccount();
-      }
     }
   }
 
   checkLevel() {
     const data = this.app.userData;
     if (!data) return;
-
     const totalClicks = data.totalClicks || 0;
     const currentLevel = data.level || 1;
 
     for (let i = MANGO_LEVELS.length - 1; i >= 0; i--) {
       const levelData = MANGO_LEVELS[i];
-
       if (totalClicks >= levelData.requiredClicks && currentLevel < levelData.level) {
         data.level = levelData.level;
         data.score += levelData.reward;
@@ -338,8 +336,7 @@ export class GameEngine {
 
         this.app.notify(
           `🎉 Уровень ${levelData.level}! "${levelData.name}" — +${this.app.formatNumber(levelData.reward)} очков!`,
-          'success',
-          5000
+          'success', 5000
         );
 
         this.updateLevelDisplay();
@@ -354,7 +351,6 @@ export class GameEngine {
 
     const currentLevel = data.level || 1;
     const totalClicks = data.totalClicks || 0;
-
     const currentLevelData = MANGO_LEVELS.find(l => l.level === currentLevel) || MANGO_LEVELS[0];
     const nextLevelData = MANGO_LEVELS.find(l => l.level === currentLevel + 1);
 
@@ -370,7 +366,6 @@ export class GameEngine {
       const progressInLevel = totalClicks - currentLevelData.requiredClicks;
       const neededForNext = nextLevelData.requiredClicks - currentLevelData.requiredClicks;
       const percentage = Math.min(100, Math.max(0, (progressInLevel / neededForNext) * 100));
-
       levelBarFill.style.width = `${percentage}%`;
       levelProgressText.textContent = `${this.app.formatNumber(totalClicks)} / ${this.app.formatNumber(nextLevelData.requiredClicks)}`;
     } else {
@@ -384,16 +379,16 @@ export class GameEngine {
     if (!data) return;
 
     const equippedId = data.equippedSkin || 'mango_default';
-    const skin = MANGO_SKINS.find(s => s.id === equippedId) || MANGO_SKINS[0];
 
-    const emojiEl = document.getElementById('mango-emoji');
-    if (emojiEl) emojiEl.textContent = skin.emoji;
-
-    const container = document.getElementById('mango-container');
-    if (container) {
-      container.classList.toggle('mango-3d', skin.render === '3d');
+    // 3D режим
+    if (this.use3D && this.mango3D) {
+      this.mango3D.setSkin(equippedId);
+    } else {
+      this.updateMangoSkinEmoji();
     }
 
+    // Обновляем свечение
+    const skin = MANGO_SKINS.find(s => s.id === equippedId) || MANGO_SKINS[0];
     const glowEl = document.getElementById('mango-glow');
     if (glowEl) {
       const rarityData = RARITIES[skin.rarity];
@@ -403,14 +398,35 @@ export class GameEngine {
     }
   }
 
+  updateMangoSkinEmoji() {
+    const data = this.app.userData;
+    if (!data) return;
+    const equippedId = data.equippedSkin || 'mango_default';
+    const skin = MANGO_SKINS.find(s => s.id === equippedId) || MANGO_SKINS[0];
+
+    const emojiEl = document.getElementById('mango-emoji');
+    if (emojiEl) {
+      emojiEl.textContent = skin.emoji;
+      emojiEl.style.display = '';
+    }
+  }
+
+  // Обновить все эффекты (вызывается при изменении инвентаря)
+  refreshEffects() {
+    if (this.effectsManager) {
+      this.effectsManager.refresh();
+    }
+  }
+
   destroy() {
     if (this.energyInterval) clearInterval(this.energyInterval);
     if (this.autoClickInterval) clearInterval(this.autoClickInterval);
     if (this.saveInterval) clearInterval(this.saveInterval);
-
-    // Финальное сохранение
-    this.forceSave().catch(err => console.error('Final save error:', err));
-
+    if (this.mango3D) {
+      this.mango3D.destroy();
+      this.mango3D = null;
+    }
+    this.forceSave().catch(err => console.error(err));
     this.isSetup = false;
   }
 }
