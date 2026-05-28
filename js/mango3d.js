@@ -29,8 +29,8 @@ export class Mango3D {
     this.scene = new THREE.Scene();
 
     const size = Math.min(container.offsetWidth, container.offsetHeight);
-    this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-    this.camera.position.set(0, 0.3, 5.5);
+    this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+    this.camera.position.set(0, 0.3, 7.5);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({
