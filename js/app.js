@@ -410,17 +410,17 @@ class MangoClickerApp {
       }
     }
 
+    const mobileNavRewards = document.getElementById('mobile-nav-rewards');
+    const navRewards = document.getElementById('nav-rewards');
+    if (navRewards && mobileNavRewards) {
+      if (navRewards.classList.contains('has-notification')) {
+        mobileNavRewards.classList.add('has-notification');
+      } else {
+        mobileNavRewards.classList.remove('has-notification');
+      }
+    }
     if (this.gameEngine) {
       this.gameEngine.updateLevelDisplay();
-    }
-  }
-  const mobileNavRewards = document.getElementById('mobile-nav-rewards');
-  const navRewards = document.getElementById('nav-rewards');
-  if (navRewards && mobileNavRewards) {
-    if (navRewards.classList.contains('has-notification')) {
-      mobileNavRewards.classList.add('has-notification');
-    } else {
-      mobileNavRewards.classList.remove('has-notification');
     }
   }
 
