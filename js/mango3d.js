@@ -1849,14 +1849,16 @@ export class Mango3D {
 
       this.mangoGroup.traverse(obj => {
         if (!obj.userData) return;
-        if (obj.userData.isStaticEmoji && !obj.userData.isGlowLayer) return;
+        const ud = obj.userData;
+        if (ud.isStaticEmoji && !ud.isGlowLayer) return;
+
+        // Пульсация свечения аур
         if (ud.auraPulse) {
           const base = ud.auraPulseBase || 2.2;
           const sc = base + Math.sin(t * 1.5) * base * 0.08;
           obj.scale.setScalar(sc / base);
-          obj.material.opacity = 0.15 + Math.sin(t * 1.5) * 0.06;
+          if (obj.material) obj.material.opacity = 0.15 + Math.sin(t * 1.5) * 0.06;
         }
-        const ud = obj.userData;
 
         // ═══ Пульсация свечения для эмодзи-скинов ═══
         if (ud.isGlowLayer) {
