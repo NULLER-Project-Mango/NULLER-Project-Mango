@@ -13,6 +13,7 @@ import { TradingManager } from './trading.js';
 import { DailyManager } from './daily.js';
 import { DropsManager } from './drops.js';
 import { PoliciesManager } from './policies.js';
+import { MusicManager } from './music.js';
 
 class MangoClickerApp {
   constructor() {
@@ -22,6 +23,7 @@ class MangoClickerApp {
     this.unsubscribeGlobal = null;
     this.lastSaveTime = 0;
     this.MIN_SAVE_INTERVAL = 500; // минимум 500мс между сохранениями
+    this.musicManager = null;
 
     this.authManager = new AuthManager(this);
     this.gameEngine = null;
@@ -42,6 +44,7 @@ class MangoClickerApp {
     this.setupAntiCheat();
 
     this.policiesManager = new PoliciesManager();
+    this.musicManager = new MusicManager(this);
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -244,6 +247,10 @@ class MangoClickerApp {
       this.gameEngine.destroy();
       this.gameEngine = null;
     }
+    // ДОБАВИТЬ:
+    if (this.musicManager) {
+      this.musicManager.stop();
+    }
   }
 
   async setupGlobalCounter() {
@@ -407,24 +414,49 @@ class MangoClickerApp {
       this.gameEngine.updateLevelDisplay();
     }
   }
+  const mobileNavRewards = document.getElementById('mobile-nav-rewards');
+  const navRewards = document.getElementById('nav-rewards');
+  if (navRewards && mobileNavRewards) {
+    if (navRewards.classList.contains('has-notification')) {
+      mobileNavRewards.classList.add('has-notification');
+    } else {
+      mobileNavRewards.classList.remove('has-notification');
+    }
+  }
 
   setupNavigation() {
+    // ПК навигация
     const navBtns = document.querySelectorAll('.nav-btn');
-
+    // Мобильная навигация
+    const mobileNavBtns = document.querySelectorAll('.mobile-nav-btn');
+  
+    // Единый обработчик
+    const handleNavClick = (panel, allButtons) => {
+      if (panel === 'click') {
+        this.closeAllPanels();
+        allButtons.forEach(b => b.classList.remove('active'));
+        // Активируем все кнопки click (и в ПК и в мобильной)
+        document.querySelectorAll('[data-panel="click"]').forEach(b => b.classList.add('active'));
+        return;
+      }
+  
+      this.openPanel(panel);
+      allButtons.forEach(b => b.classList.remove('active'));
+      // Активируем все кнопки с этим panel
+      document.querySelectorAll(`[data-panel="${panel}"]`).forEach(b => b.classList.add('active'));
+    };
+  
     navBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const panel = btn.dataset.panel;
-
-        if (panel === 'click') {
-          this.closeAllPanels();
-          navBtns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          return;
-        }
-
-        this.openPanel(panel);
-        navBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        handleNavClick(panel, [...navBtns, ...mobileNavBtns]);
+      });
+    });
+  
+    mobileNavBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panel = btn.dataset.panel;
+        handleNavClick(panel, [...navBtns, ...mobileNavBtns]);
       });
     });
   }
@@ -457,9 +489,10 @@ class MangoClickerApp {
     document.querySelectorAll('.btn-close-panel').forEach(btn => {
       btn.addEventListener('click', () => {
         this.closeAllPanels();
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const clickBtn = document.querySelector('.nav-btn[data-panel="click"]');
-        if (clickBtn) clickBtn.classList.add('active');
+        // Снимаем активность со всех кнопок навигации
+        document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(b => b.classList.remove('active'));
+        // Активируем кнопки "Клик"
+        document.querySelectorAll('[data-panel="click"]').forEach(b => b.classList.add('active'));
       });
     });
   }
