@@ -27,8 +27,8 @@ export class TradingManager {
     if (!container) return;
 
     switch (this.currentTab) {
-      case 'market': await this.renderMarket(container); break;
-      case 'sell': this.renderSellForm(container); break;
+      case 'market':    await this.renderMarket(container);   break;
+      case 'sell':      this.renderSellForm(container);       break;
       case 'my-offers': await this.renderMyOffers(container); break;
     }
   }
@@ -56,7 +56,6 @@ export class TradingManager {
         const item = getItemById(listing.itemId);
         if (!item) return;
 
-        // ВАЛИДАЦИЯ полей
         if (typeof listing.price !== 'number' || listing.price <= 0) return;
         if (typeof listing.sellerId !== 'string') return;
 
@@ -84,7 +83,6 @@ export class TradingManager {
 
         const seller = document.createElement('div');
         seller.className = 'trade-item-seller';
-        // textContent защищает от XSS!
         seller.textContent = `Продавец: ${this.sanitizeName(listing.sellerName || 'Игрок')}`;
         textDiv.appendChild(seller);
 
@@ -202,7 +200,6 @@ export class TradingManager {
     const itemId = document.getElementById('sell-item-select').value;
     const priceInput = document.getElementById('sell-price').value;
 
-    // ВАЛИДАЦИЯ
     if (!itemId) {
       this.app.notify('Выберите предмет!', 'warning');
       return;
@@ -231,7 +228,6 @@ export class TradingManager {
 
     const data = this.app.userData;
 
-    // ПРОВЕРКА что предмет действительно есть
     const invIdx = data.inventory.findIndex(i => i.id === itemId);
     if (invIdx < 0) {
       this.app.notify('Предмет не в инвентаре!', 'error');
@@ -274,7 +270,6 @@ export class TradingManager {
       this.app.notify(`${item.emoji} ${item.name} выставлено за ${this.app.formatNumber(price)} очков!`, 'success');
       this.render();
     } catch (e) {
-      // ОТКАТ
       console.error('Create listing error:', e);
       data.inventory = oldInventory;
       this.app.notify('Ошибка при создании лота!', 'error');
@@ -284,6 +279,9 @@ export class TradingManager {
     }
   }
 
+  // ═══════════════════════════════════════════════
+  //         FIX: ПОКУПКА — ЧТЕНИЯ ПЕРЕД ЗАПИСЯМИ
+  // ═══════════════════════════════════════════════
   async buyListing(listingId, buttonEl) {
     if (this.isProcessing) return;
     this.isProcessing = true;
@@ -291,15 +289,18 @@ export class TradingManager {
 
     try {
       const listingRef = doc(db, 'market', listingId);
+      const buyerRef   = doc(db, 'users', this.app.user.uid);
 
-      // ВСЕ операции в одной транзакции (защита от race condition)
       await runTransaction(db, async (transaction) => {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ЭТАП 1: ВСЕ ЧТЕНИЯ
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         const listingSnap = await transaction.get(listingRef);
         if (!listingSnap.exists()) throw new Error('Listing not found');
 
         const listing = listingSnap.data();
 
-        // ВАЛИДАЦИЯ
+        // Валидация ДО чтения других документов
         if (typeof listing.price !== 'number' || listing.price <= 0) {
           throw new Error('Invalid listing');
         }
@@ -307,22 +308,31 @@ export class TradingManager {
           throw new Error('Own listing');
         }
 
-        // ВАЛИДАЦИЯ предмета
         const item = getItemById(listing.itemId);
         if (!item) throw new Error('Invalid item');
 
-        const buyerRef = doc(db, 'users', this.app.user.uid);
-        const sellerRef = doc(db, 'users', listing.sellerId);
-
+        // Читаем покупателя
         const buyerSnap = await transaction.get(buyerRef);
         if (!buyerSnap.exists()) throw new Error('Buyer not found');
 
-        const buyerData = buyerSnap.data();
-        if (buyerData.score < listing.price) throw new Error('Not enough score');
+        // Читаем продавца (всё ещё в этапе чтений!)
+        const sellerRef = doc(db, 'users', listing.sellerId);
+        const sellerSnap = await transaction.get(sellerRef);
+        // sellerSnap может не существовать — обработаем ниже
 
-        // Лимит инвентаря
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ЭТАП 2: ВАЛИДАЦИЯ И ПОДГОТОВКА ДАННЫХ
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const buyerData = buyerSnap.data();
+
+        if (buyerData.score < listing.price) {
+          throw new Error('Not enough score');
+        }
+
         const buyerInventory = [...(buyerData.inventory || [])];
-        if (buyerInventory.length >= 500) throw new Error('Inventory full');
+        if (buyerInventory.length >= 500) {
+          throw new Error('Inventory full');
+        }
 
         buyerInventory.push({
           id: listing.itemId,
@@ -330,13 +340,17 @@ export class TradingManager {
           acquiredAt: Date.now()
         });
 
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ЭТАП 3: ВСЕ ЗАПИСИ
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // 1. Списываем у покупателя + добавляем предмет
         transaction.update(buyerRef, {
           score: buyerData.score - listing.price,
           inventory: buyerInventory
         });
 
-        // Кредит продавцу
-        const sellerSnap = await transaction.get(sellerRef);
+        // 2. Начисляем продавцу (если документ существует)
         if (sellerSnap.exists()) {
           const sellerData = sellerSnap.data();
           transaction.update(sellerRef, {
@@ -344,6 +358,7 @@ export class TradingManager {
           });
         }
 
+        // 3. Удаляем лот
         transaction.delete(listingRef);
       });
 
@@ -353,12 +368,12 @@ export class TradingManager {
       console.error('Buy listing error:', e);
       const msgs = {
         'Listing not found': 'Лот уже куплен или удалён!',
-        'Own listing': 'Нельзя купить свой лот!',
-        'Not enough score': 'Недостаточно очков!',
-        'Inventory full': 'Инвентарь переполнен!',
-        'Invalid item': 'Некорректный предмет!',
-        'Invalid listing': 'Некорректный лот!',
-        'Buyer not found': 'Ошибка покупателя!'
+        'Own listing':       'Нельзя купить свой лот!',
+        'Not enough score':  'Недостаточно очков!',
+        'Inventory full':    'Инвентарь переполнен!',
+        'Invalid item':      'Некорректный предмет!',
+        'Invalid listing':   'Некорректный лот!',
+        'Buyer not found':   'Ошибка покупателя!'
       };
       this.app.notify(msgs[e.message] || 'Ошибка при покупке!', 'error');
     } finally {
@@ -425,39 +440,39 @@ export class TradingManager {
     }
   }
 
+  // ═══════════════════════════════════════════════
+  //         FIX: ОТМЕНА ЛОТА — ТОЖЕ READS → WRITES
+  // ═══════════════════════════════════════════════
   async cancelListing(listingId, itemId, buttonEl) {
     if (this.isProcessing) return;
     this.isProcessing = true;
     if (buttonEl) buttonEl.disabled = true;
 
-    const data = this.app.userData;
-    const oldInventory = JSON.parse(JSON.stringify(data.inventory));
-
     try {
-      // Транзакция: удалить лот И вернуть предмет
-      await runTransaction(db, async (transaction) => {
-        const listingRef = doc(db, 'market', listingId);
-        const listingSnap = await transaction.get(listingRef);
+      const listingRef = doc(db, 'market', listingId);
+      const userRef    = doc(db, 'users', this.app.user.uid);
 
+      await runTransaction(db, async (transaction) => {
+        // ━━━ ЭТАП 1: ВСЕ ЧТЕНИЯ ━━━
+        const listingSnap = await transaction.get(listingRef);
         if (!listingSnap.exists()) throw new Error('Listing not found');
 
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists()) throw new Error('User not found');
+
+        // ━━━ ЭТАП 2: ВАЛИДАЦИЯ ━━━
         const listing = listingSnap.data();
         if (listing.sellerId !== this.app.user.uid) {
           throw new Error('Not your listing');
         }
 
-        const userRef = doc(db, 'users', this.app.user.uid);
-        const userSnap = await transaction.get(userRef);
-
-        if (!userSnap.exists()) throw new Error('User not found');
-
         const userData = userSnap.data();
         const inventory = [...(userData.inventory || [])];
-
         if (inventory.length >= 500) throw new Error('Inventory full');
 
         inventory.push({ id: itemId, qty: 1, acquiredAt: Date.now() });
 
+        // ━━━ ЭТАП 3: ВСЕ ЗАПИСИ ━━━
         transaction.update(userRef, { inventory: inventory });
         transaction.delete(listingRef);
       });
@@ -466,7 +481,13 @@ export class TradingManager {
       this.render();
     } catch (e) {
       console.error('Cancel listing error:', e);
-      this.app.notify('Ошибка при отмене лота!', 'error');
+      const msgs = {
+        'Listing not found':  'Лот уже удалён!',
+        'Not your listing':   'Это не ваш лот!',
+        'User not found':     'Ошибка пользователя!',
+        'Inventory full':     'Инвентарь переполнен!'
+      };
+      this.app.notify(msgs[e.message] || 'Ошибка при отмене лота!', 'error');
     } finally {
       this.isProcessing = false;
       if (buttonEl) buttonEl.disabled = false;
