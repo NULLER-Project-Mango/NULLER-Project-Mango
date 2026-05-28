@@ -1,5 +1,3 @@
-// js/items-database.js
-
 export const RARITIES = {
   common:    { name: 'Обычный',      color: '#9e9e9e', glow: 'rgba(158,158,158,0.4)', chance: 0.40, multiplier: 1 },
   uncommon:  { name: 'Необычный',    color: '#4caf50', glow: 'rgba(76,175,80,0.4)',   chance: 0.25, multiplier: 1.5 },
@@ -11,7 +9,6 @@ export const RARITIES = {
   cosmic:    { name: 'Космический',  color: '#e040fb', glow: 'rgba(224,64,251,0.8)',   chance: 0.002, multiplier: 250 }
 };
 
-// Цены увеличены ещё в 10 раз!
 export const MANGO_SKINS = [
   { id: 'mango_default',       name: 'Обычное Манго',           rarity: 'common',    price: 0,           clickBonus: 0,    type: 'skin', render: '2d', emoji: '🥭', description: 'Стандартное спелое манго' },
   { id: 'mango_green',         name: 'Зелёное Манго',           rarity: 'common',    price: 5000,        clickBonus: 1,    type: 'skin', render: '2d', emoji: '🥭', description: 'Ещё не дозрело, но уже кликабельно' },
@@ -160,41 +157,41 @@ export const RECIPES = [
   { id: 'recipe_1',  name: 'Кристальное манго',  result: 'mango_crystal',     ingredients: [{ id: 'mango_green', qty: 3 }, { id: 'mango_round', qty: 2 }],  cost: 50000 },
   { id: 'recipe_2',  name: 'Огненное манго',     result: 'mango_fire',        ingredients: [{ id: 'mango_red', qty: 3 }, { id: 'aura_fire', qty: 1 }],      cost: 100000 },
   { id: 'recipe_3',  name: 'Ледяное манго',      result: 'mango_ice',         ingredients: [{ id: 'mango_crystal', qty: 1 }, { id: 'aura_ice', qty: 1 }],    cost: 120000 },
-  { id: 'recipe_4',  name: 'Радужное манго',      result: 'mango_rainbow',     ingredients: [{ id: 'mango_fire', qty: 1 }, { id: 'mango_ice', qty: 1 }, { id: 'mango_electric', qty: 1 }], cost: 300000 },
-  { id: 'recipe_5',  name: 'Алмазное манго',      result: 'mango_diamond',     ingredients: [{ id: 'mango_crystal', qty: 3 }, { id: 'crown_silver', qty: 1 }], cost: 500000 },
-  { id: 'recipe_6',  name: 'Галактическое манго', result: 'mango_galaxy',      ingredients: [{ id: 'mango_diamond', qty: 1 }, { id: 'mango_void', qty: 1 }, { id: 'bg_space', qty: 1 }], cost: 2000000 },
-  { id: 'recipe_7',  name: 'Драконье манго',      result: 'mango_dragon',      ingredients: [{ id: 'mango_fire', qty: 2 }, { id: 'pet_dragon_baby', qty: 1 }, { id: 'wings_dragon', qty: 1 }], cost: 3000000 },
-  { id: 'recipe_8',  name: 'Манго Феникса',       result: 'mango_phoenix',     ingredients: [{ id: 'mango_dragon', qty: 1 }, { id: 'pet_phoenix', qty: 1 }], cost: 4000000 },
-  { id: 'recipe_9',  name: 'Небесное манго',      result: 'mango_celestial',   ingredients: [{ id: 'mango_phoenix', qty: 1 }, { id: 'mango_galaxy', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 10000000 },
-  { id: 'recipe_10', name: 'Квантовое манго',     result: 'mango_quantum',     ingredients: [{ id: 'mango_celestial', qty: 1 }, { id: 'mango_cyberpunk', qty: 2 }], cost: 15000000 },
-  { id: 'recipe_11', name: 'Манго Времени',       result: 'mango_time',        ingredients: [{ id: 'mango_quantum', qty: 1 }, { id: 'mango_ancient', qty: 2 }], cost: 20000000 },
-  { id: 'recipe_12', name: 'Божественное манго',   result: 'mango_divine',      ingredients: [{ id: 'mango_time', qty: 1 }, { id: 'mango_celestial', qty: 1 }, { id: 'crown_diamond', qty: 1 }], cost: 50000000 },
-  { id: 'recipe_13', name: 'Вечное манго',         result: 'mango_eternal',     ingredients: [{ id: 'mango_divine', qty: 2 }, { id: 'bg_heaven', qty: 1 }], cost: 80000000 },
-  { id: 'recipe_14', name: 'Космическое манго',    result: 'mango_cosmic',      ingredients: [{ id: 'mango_eternal', qty: 1 }, { id: 'mango_quantum', qty: 1 }, { id: 'aura_cosmic', qty: 2 }], cost: 200000000 },
-  { id: 'recipe_15', name: 'Манго Сингулярности',  result: 'mango_singularity', ingredients: [{ id: 'mango_cosmic', qty: 2 }, { id: 'mango_divine', qty: 1 }], cost: 500000000 },
-  { id: 'recipe_16', name: 'Золотая корона',       result: 'crown_gold',        ingredients: [{ id: 'crown_silver', qty: 2 }, { id: 'crown_bronze', qty: 3 }], cost: 500000 },
-  { id: 'recipe_17', name: 'Алмазная корона',      result: 'crown_diamond',     ingredients: [{ id: 'crown_gold', qty: 2 }], cost: 2500000 },
-  { id: 'recipe_18', name: 'Крылья дракона',       result: 'wings_dragon',      ingredients: [{ id: 'wings_angel', qty: 1 }, { id: 'wings_demon', qty: 1 }, { id: 'aura_fire', qty: 2 }], cost: 3500000 },
-  { id: 'recipe_19', name: 'Единорог',             result: 'pet_unicorn',       ingredients: [{ id: 'pet_phoenix', qty: 1 }, { id: 'trail_rainbow', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 15000000 },
-  { id: 'recipe_20', name: 'Космическая аура',     result: 'aura_cosmic',       ingredients: [{ id: 'aura_fire', qty: 1 }, { id: 'aura_ice', qty: 1 }, { id: 'aura_lightning', qty: 1 }], cost: 8000000 },
+  { id: 'recipe_4',  name: 'Радужное манго',     result: 'mango_rainbow',     ingredients: [{ id: 'mango_fire', qty: 1 }, { id: 'mango_ice', qty: 1 }, { id: 'mango_electric', qty: 1 }], cost: 300000 },
+  { id: 'recipe_5',  name: 'Алмазное манго',     result: 'mango_diamond',     ingredients: [{ id: 'mango_crystal', qty: 3 }, { id: 'crown_silver', qty: 1 }], cost: 500000 },
+  { id: 'recipe_6',  name: 'Галактическое манго',result: 'mango_galaxy',      ingredients: [{ id: 'mango_diamond', qty: 1 }, { id: 'mango_void', qty: 1 }, { id: 'bg_space', qty: 1 }], cost: 2000000 },
+  { id: 'recipe_7',  name: 'Драконье манго',     result: 'mango_dragon',      ingredients: [{ id: 'mango_fire', qty: 2 }, { id: 'pet_dragon_baby', qty: 1 }, { id: 'wings_dragon', qty: 1 }], cost: 3000000 },
+  { id: 'recipe_8',  name: 'Манго Феникса',      result: 'mango_phoenix',     ingredients: [{ id: 'mango_dragon', qty: 1 }, { id: 'pet_phoenix', qty: 1 }], cost: 4000000 },
+  { id: 'recipe_9',  name: 'Небесное манго',     result: 'mango_celestial',   ingredients: [{ id: 'mango_phoenix', qty: 1 }, { id: 'mango_galaxy', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 10000000 },
+  { id: 'recipe_10', name: 'Квантовое манго',    result: 'mango_quantum',     ingredients: [{ id: 'mango_celestial', qty: 1 }, { id: 'mango_cyberpunk', qty: 2 }], cost: 15000000 },
+  { id: 'recipe_11', name: 'Манго Времени',      result: 'mango_time',        ingredients: [{ id: 'mango_quantum', qty: 1 }, { id: 'mango_ancient', qty: 2 }], cost: 20000000 },
+  { id: 'recipe_12', name: 'Божественное манго', result: 'mango_divine',      ingredients: [{ id: 'mango_time', qty: 1 }, { id: 'mango_celestial', qty: 1 }, { id: 'crown_diamond', qty: 1 }], cost: 50000000 },
+  { id: 'recipe_13', name: 'Вечное манго',       result: 'mango_eternal',     ingredients: [{ id: 'mango_divine', qty: 2 }, { id: 'bg_heaven', qty: 1 }], cost: 80000000 },
+  { id: 'recipe_14', name: 'Космическое манго',  result: 'mango_cosmic',      ingredients: [{ id: 'mango_eternal', qty: 1 }, { id: 'mango_quantum', qty: 1 }, { id: 'aura_cosmic', qty: 2 }], cost: 200000000 },
+  { id: 'recipe_15', name: 'Манго Сингулярности',result: 'mango_singularity', ingredients: [{ id: 'mango_cosmic', qty: 2 }, { id: 'mango_divine', qty: 1 }], cost: 500000000 },
+  { id: 'recipe_16', name: 'Золотая корона',     result: 'crown_gold',        ingredients: [{ id: 'crown_silver', qty: 2 }, { id: 'crown_bronze', qty: 3 }], cost: 500000 },
+  { id: 'recipe_17', name: 'Алмазная корона',    result: 'crown_diamond',     ingredients: [{ id: 'crown_gold', qty: 2 }], cost: 2500000 },
+  { id: 'recipe_18', name: 'Крылья дракона',     result: 'wings_dragon',      ingredients: [{ id: 'wings_angel', qty: 1 }, { id: 'wings_demon', qty: 1 }, { id: 'aura_fire', qty: 2 }], cost: 3500000 },
+  { id: 'recipe_19', name: 'Единорог',           result: 'pet_unicorn',       ingredients: [{ id: 'pet_phoenix', qty: 1 }, { id: 'trail_rainbow', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 15000000 },
+  { id: 'recipe_20', name: 'Космическая аура',   result: 'aura_cosmic',       ingredients: [{ id: 'aura_fire', qty: 1 }, { id: 'aura_ice', qty: 1 }, { id: 'aura_lightning', qty: 1 }], cost: 8000000 },
 ];
 
 export const MANGO_LEVELS = [
-  { level: 1,  name: 'Семечко',             requiredClicks: 0,            reward: 0 },
-  { level: 2,  name: 'Росток',              requiredClicks: 500,          reward: 200 },
-  { level: 3,  name: 'Саженец',             requiredClicks: 2500,         reward: 800 },
-  { level: 4,  name: 'Молодое дерево',      requiredClicks: 7500,         reward: 2500 },
-  { level: 5,  name: 'Цветущее дерево',     requiredClicks: 25000,        reward: 8000 },
-  { level: 6,  name: 'Плодоносящее',        requiredClicks: 75000,        reward: 25000 },
-  { level: 7,  name: 'Могучее дерево',       requiredClicks: 250000,       reward: 80000 },
-  { level: 8,  name: 'Древнее дерево',       requiredClicks: 750000,       reward: 200000 },
-  { level: 9,  name: 'Мировое дерево',       requiredClicks: 2500000,      reward: 600000 },
-  { level: 10, name: 'Космическое дерево',   requiredClicks: 7500000,      reward: 1500000 },
-  { level: 11, name: 'Божественное дерево',  requiredClicks: 25000000,     reward: 4000000 },
-  { level: 12, name: 'Дерево Вселенной',     requiredClicks: 75000000,     reward: 10000000 },
-  { level: 13, name: 'Дерево Бесконечности', requiredClicks: 250000000,    reward: 30000000 },
-  { level: 14, name: 'Трансцендентное',      requiredClicks: 750000000,    reward: 100000000 },
-  { level: 15, name: 'Абсолют',             requiredClicks: 2500000000,   reward: 500000000 },
+  { level: 1,  name: 'Семечко',             requiredClicks: 0,          reward: 0 },
+  { level: 2,  name: 'Росток',              requiredClicks: 500,        reward: 200 },
+  { level: 3,  name: 'Саженец',             requiredClicks: 2500,       reward: 800 },
+  { level: 4,  name: 'Молодое дерево',      requiredClicks: 7500,       reward: 2500 },
+  { level: 5,  name: 'Цветущее дерево',     requiredClicks: 25000,      reward: 8000 },
+  { level: 6,  name: 'Плодоносящее',        requiredClicks: 75000,      reward: 25000 },
+  { level: 7,  name: 'Могучее дерево',      requiredClicks: 250000,     reward: 80000 },
+  { level: 8,  name: 'Древнее дерево',      requiredClicks: 750000,     reward: 200000 },
+  { level: 9,  name: 'Мировое дерево',      requiredClicks: 2500000,    reward: 600000 },
+  { level: 10, name: 'Космическое дерево',  requiredClicks: 7500000,    reward: 1500000 },
+  { level: 11, name: 'Божественное дерево', requiredClicks: 25000000,   reward: 4000000 },
+  { level: 12, name: 'Дерево Вселенной',    requiredClicks: 75000000,   reward: 10000000 },
+  { level: 13, name: 'Дерево Бесконечности',requiredClicks: 250000000,  reward: 30000000 },
+  { level: 14, name: 'Трансцендентное',     requiredClicks: 750000000,  reward: 100000000 },
+  { level: 15, name: 'Абсолют',            requiredClicks: 2500000000, reward: 500000000 },
 ];
 
 export function getAllItems() {
@@ -203,4 +200,16 @@ export function getAllItems() {
 
 export function getItemById(id) {
   return getAllItems().find(item => item.id === id);
+}
+
+// Максимальное количество предмета в инвентаре:
+// - апгрейды и скины — без лимита (Infinity)
+// - всё остальное — 1 штука
+// Если у предмета задано поле maxCount — используем его
+export function getItemMaxCount(item) {
+  if (!item) return 1;
+  if (typeof item.maxCount === 'number') return item.maxCount;
+  if (item.type === 'upgrade') return Infinity;
+  if (item.type === 'skin')    return Infinity;
+  return 1;
 }
