@@ -1,4 +1,3 @@
-// js/mango3d.js
 let THREE_LOADED = false;
 
 export class Mango3D {
@@ -44,12 +43,9 @@ export class Mango3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // ИСПРАВЛЕНИЕ: без physicallyCorrectLights — интенсивность
-    // работает интуитивно, картинка яркая
     this.renderer.physicallyCorrectLights = false;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
 
-    // ИСПРАВЛЕНИЕ: ReinhardToneMapping мягче, не затемняет
     this.renderer.toneMapping = THREE.ReinhardToneMapping;
     this.renderer.toneMappingExposure = 1.8;
 
@@ -57,7 +53,6 @@ export class Mango3D {
     if (old) old.remove();
     container.appendChild(this.renderer.domElement);
 
-    // ИСПРАВЛЕНИЕ: нормальный environment map через CubeCamera
     this._buildEnvMap();
 
     this.setupBaseLights();
@@ -79,7 +74,6 @@ export class Mango3D {
     });
   }
 
-  // ИСПРАВЛЕНИЕ: строим богатый env map из градиента цветов
   _buildEnvMap() {
     const cubeRT = new THREE.WebGLCubeRenderTarget(256, {
       format: THREE.RGBFormat,
@@ -87,11 +81,8 @@ export class Mango3D {
       minFilter: THREE.LinearMipmapLinearFilter,
     });
 
-    // Рисуем градиентное небо как env map вручную через 6 граней
-    const size = 256;
     const envScene = new THREE.Scene();
 
-    // Градиентный фон — оранжево-золотой снизу, синий сверху
     const envGeo = new THREE.SphereGeometry(50, 32, 32);
     const canvas2d = document.createElement('canvas');
     canvas2d.width = canvas2d.height = 512;
@@ -110,7 +101,6 @@ export class Mango3D {
     });
     envScene.add(new THREE.Mesh(envGeo, envMat));
 
-    // Яркие точечные источники в env map
     const envLights = [
       { color: 0xffffff, intensity: 5, pos: [10, 10, 10] },
       { color: 0xff8800, intensity: 3, pos: [-10, 5, -10] },
@@ -133,12 +123,10 @@ export class Mango3D {
   // ───────────────────────── LIGHTS ─────────────────────────
 
   setupBaseLights() {
-    // ИСПРАВЛЕНИЕ: высокая интенсивность для ярких материалов
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambient);
     this.lights.push(ambient);
 
-    // Ключевой свет сверху-спереди
     const key = new THREE.DirectionalLight(0xfff5e1, 2.5);
     key.position.set(4, 7, 5);
     key.castShadow = true;
@@ -150,19 +138,16 @@ export class Mango3D {
     this.scene.add(key);
     this.lights.push(key);
 
-    // Заполняющий свет слева
     const fill = new THREE.DirectionalLight(0x6699ff, 1.2);
     fill.position.set(-5, 2, 3);
     this.scene.add(fill);
     this.lights.push(fill);
 
-    // Контровой свет сзади
     const rim = new THREE.DirectionalLight(0xff9944, 1.5);
     rim.position.set(-2, 5, -6);
     this.scene.add(rim);
     this.lights.push(rim);
 
-    // Нижний отражённый свет (имитация пола)
     const bottom = new THREE.DirectionalLight(0xffa726, 0.4);
     bottom.position.set(0, -5, 2);
     this.scene.add(bottom);
@@ -181,10 +166,6 @@ export class Mango3D {
 
   // ───────────────────────── ПРИМИТИВЫ ─────────────────────────
 
-  /**
-   * Тело манго — Phong для яркости, Standard для металлика
-   * ИСПРАВЛЕНИЕ: MeshPhongMaterial даёт сочные яркие цвета без PBR затемнения
-   */
   createMangoBody(color, opts = {}) {
     const {
       usePBR            = false,
@@ -199,16 +180,13 @@ export class Mango3D {
       flatShading       = false,
     } = opts;
 
-    // Форма манго — вытянутая сфера с сужением
     const geo = new THREE.SphereGeometry(1.2, 96, 96);
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const y = pos.getY(i);
       const z = pos.getZ(i);
-      // Форма: вытягиваем по Y, сужаем к полюсам
       const taper = 1 - Math.abs(y) * 0.13;
-      // Небольшая асимметрия — манго не идеально круглое
       const asymX = 1 + Math.sin(y * 1.5) * 0.04;
       pos.setXYZ(i, x * taper * asymX, y * 1.35, z * taper);
     }
@@ -216,7 +194,6 @@ export class Mango3D {
 
     let mat;
     if (usePBR) {
-      // PBR для металлических скинов
       mat = new THREE.MeshStandardMaterial({
         color,
         roughness,
@@ -230,7 +207,6 @@ export class Mango3D {
         envMapIntensity: 2.5,
       });
     } else {
-      // Phong — яркий, сочный, без затемнения PBR
       mat = new THREE.MeshPhongMaterial({
         color,
         specular: new THREE.Color(specular),
@@ -249,11 +225,9 @@ export class Mango3D {
     return mesh;
   }
 
-  // Стебелёк с реалистичной формой
   createStem(color = 0x5d4037) {
     const group = new THREE.Group();
 
-    // Основной стебель — слегка изогнутый
     const curve = new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0.08, 0.15, 0.04),
@@ -268,11 +242,9 @@ export class Mango3D {
     return group;
   }
 
-  // Листик с прожилками
   createLeaf(color = 0x4caf50, scale = 1) {
     const group = new THREE.Group();
 
-    // Основная пластина листа
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
     shape.bezierCurveTo( 0.32, 0.08,  0.52, 0.52,  0.40, 0.98);
@@ -291,7 +263,6 @@ export class Mango3D {
     leaf.castShadow = true;
     group.add(leaf);
 
-    // Центральная прожилка
     const veinCurve = new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(0, 0.02, 0.01),
       new THREE.Vector3(0.02, 0.5, 0.01),
@@ -304,7 +275,6 @@ export class Mango3D {
     });
     group.add(new THREE.Mesh(veinGeo, veinMat));
 
-    // Боковые прожилки
     for (let i = 0; i < 4; i++) {
       const t = 0.2 + i * 0.18;
       const sideX = i % 2 === 0 ? 0.22 : -0.22;
@@ -323,7 +293,6 @@ export class Mango3D {
     return group;
   }
 
-  // Блик
   createHighlight(opacity = 0.28) {
     const geo = new THREE.SphereGeometry(0.38, 20, 20);
     const mat = new THREE.MeshBasicMaterial({
@@ -335,7 +304,6 @@ export class Mango3D {
     return mesh;
   }
 
-  // Вспомогательные методы
   _makeHalo(r, tube, color, opacity, rotX = Math.PI / 2) {
     const geo = new THREE.TorusGeometry(r, tube, 16, 100);
     const mat = new THREE.MeshBasicMaterial({
@@ -366,7 +334,6 @@ export class Mango3D {
     return new THREE.Mesh(geo, mat);
   }
 
-  // Частицы вокруг манго (общий метод)
   _makeParticleCloud(count, radius, colors, sizeRange, userData = {}) {
     const group = new THREE.Group();
     for (let i = 0; i < count; i++) {
@@ -385,73 +352,118 @@ export class Mango3D {
     return group;
   }
 
-    /**
-   * Строит эмодзи-скин: спрайт с текстурой эмодзи через Canvas
-   * НЕ вращается и НЕ покачивается
+  /**
+   * Эмодзи-скин: большой, яркий, сочный
+   * Многослойное свечение + крупный размер
    */
   _buildEmojiSkin(emoji, tintColor = 0xffffff, scale = 1.0) {
-    // Помечаем группу как "статичную" — animate() не будет её крутить
     this.mangoGroup.userData.isEmojiSkin = true;
 
-    // Рисуем эмодзи на canvas
-    const size = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d');
-
-    // Фоновое свечение
-    const grad = ctx.createRadialGradient(
-      size / 2, size / 2, 50,
-      size / 2, size / 2, size / 2,
-    );
     const r = (tintColor >> 16) & 0xff;
     const g = (tintColor >> 8) & 0xff;
     const b = tintColor & 0xff;
-    grad.addColorStop(0,    `rgba(${r},${g},${b},0.5)`);
-    grad.addColorStop(0.6,  `rgba(${r},${g},${b},0.1)`);
-    grad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
 
-    // Сам эмодзи
-    ctx.font = `${size * 0.75}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // ═══ Слой 1: Внешнее мягкое свечение (большое, размытое) ═══
+    const outerGlowSize = 640;
+    const outerCanvas = document.createElement('canvas');
+    outerCanvas.width = outerCanvas.height = outerGlowSize;
+    const outerCtx = outerCanvas.getContext('2d');
 
-    // Тень
-    ctx.shadowColor = `rgba(${r},${g},${b},0.7)`;
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetY = 8;
+    const outerGrad = outerCtx.createRadialGradient(
+      outerGlowSize / 2, outerGlowSize / 2, 0,
+      outerGlowSize / 2, outerGlowSize / 2, outerGlowSize / 2,
+    );
+    outerGrad.addColorStop(0,    `rgba(${r},${g},${b},0.6)`);
+    outerGrad.addColorStop(0.3,  `rgba(${r},${g},${b},0.25)`);
+    outerGrad.addColorStop(0.6,  `rgba(${r},${g},${b},0.08)`);
+    outerGrad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+    outerCtx.fillStyle = outerGrad;
+    outerCtx.fillRect(0, 0, outerGlowSize, outerGlowSize);
 
-    ctx.fillText(emoji, size / 2, size / 2 + 10);
-
-    // Цветовая тонировка (если не оранжевый по умолчанию)
-    if (tintColor !== 0xff9800) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = `rgba(${r},${g},${b},0.3)`;
-      ctx.fillRect(0, 0, size, size);
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
-    // Создаём текстуру и спрайт
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-
-    const spriteMat = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
+    const outerTex = new THREE.CanvasTexture(outerCanvas);
+    outerTex.needsUpdate = true;
+    const outerSpriteMat = new THREE.SpriteMaterial({
+      map: outerTex, transparent: true, opacity: 0.7,
     });
-    const sprite = new THREE.Sprite(spriteMat);
+    const outerSprite = new THREE.Sprite(outerSpriteMat);
+    const outerSpriteSize = 6.5 * scale;
+    outerSprite.scale.set(outerSpriteSize, outerSpriteSize, 1);
+    outerSprite.userData.isStaticEmoji = true;
+    outerSprite.userData.isGlowLayer = true;
+    outerSprite.userData.glowPulsePhase = 0;
+    this.mangoGroup.add(outerSprite);
 
-    // Размер спрайта в сцене (~3 единицы)
-    const baseSize = 3.0 * scale;
-    sprite.scale.set(baseSize, baseSize, 1);
+    // ═══ Слой 2: Внутреннее яркое свечение ═══
+    const innerGlowSize = 512;
+    const innerCanvas = document.createElement('canvas');
+    innerCanvas.width = innerCanvas.height = innerGlowSize;
+    const innerCtx = innerCanvas.getContext('2d');
 
-    // Помечаем спрайт чтобы animate() его не трогал
-    sprite.userData.isStaticEmoji = true;
+    const innerGrad = innerCtx.createRadialGradient(
+      innerGlowSize / 2, innerGlowSize / 2, 0,
+      innerGlowSize / 2, innerGlowSize / 2, innerGlowSize * 0.35,
+    );
+    // Ярче и насыщеннее
+    const brightR = Math.min(255, r + 60);
+    const brightG = Math.min(255, g + 60);
+    const brightB = Math.min(255, b + 60);
+    innerGrad.addColorStop(0,   `rgba(${brightR},${brightG},${brightB},0.8)`);
+    innerGrad.addColorStop(0.5, `rgba(${r},${g},${b},0.3)`);
+    innerGrad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+    innerCtx.fillStyle = innerGrad;
+    innerCtx.fillRect(0, 0, innerGlowSize, innerGlowSize);
 
-    this.mangoGroup.add(sprite);
+    const innerTex = new THREE.CanvasTexture(innerCanvas);
+    innerTex.needsUpdate = true;
+    const innerSpriteMat = new THREE.SpriteMaterial({
+      map: innerTex, transparent: true, opacity: 0.85,
+    });
+    const innerSprite = new THREE.Sprite(innerSpriteMat);
+    const innerSpriteSize = 4.8 * scale;
+    innerSprite.scale.set(innerSpriteSize, innerSpriteSize, 1);
+    innerSprite.userData.isStaticEmoji = true;
+    innerSprite.userData.isGlowLayer = true;
+    innerSprite.userData.glowPulsePhase = Math.PI;
+    this.mangoGroup.add(innerSprite);
+
+    // ═══ Слой 3: Сам эмодзи (главный, крупный) ═══
+    const emojiSize = 640;
+    const emojiCanvas = document.createElement('canvas');
+    emojiCanvas.width = emojiCanvas.height = emojiSize;
+    const emojiCtx = emojiCanvas.getContext('2d');
+
+    // Эмодзи — крупный, чёткий
+    emojiCtx.font = `${emojiSize * 0.7}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    emojiCtx.textAlign = 'center';
+    emojiCtx.textBaseline = 'middle';
+
+    // Двойная тень для глубины
+    emojiCtx.shadowColor = `rgba(${r},${g},${b},0.9)`;
+    emojiCtx.shadowBlur = 50;
+    emojiCtx.shadowOffsetY = 0;
+    emojiCtx.fillText(emoji, emojiSize / 2, emojiSize / 2 + 10);
+
+    // Второй проход — усиление
+    emojiCtx.shadowBlur = 25;
+    emojiCtx.shadowColor = `rgba(255,255,255,0.4)`;
+    emojiCtx.fillText(emoji, emojiSize / 2, emojiSize / 2 + 10);
+
+    const emojiTex = new THREE.CanvasTexture(emojiCanvas);
+    emojiTex.needsUpdate = true;
+
+    const emojiSpriteMat = new THREE.SpriteMaterial({
+      map: emojiTex, transparent: true,
+    });
+    const emojiSprite = new THREE.Sprite(emojiSpriteMat);
+    const emojiSpriteSize = 4.2 * scale;
+    emojiSprite.scale.set(emojiSpriteSize, emojiSpriteSize, 1);
+    emojiSprite.userData.isStaticEmoji = true;
+    this.mangoGroup.add(emojiSprite);
+
+    // ═══ Точечный свет в цвет скина ═══
+    const emojiLight = new THREE.PointLight(tintColor, 1.5, 8);
+    emojiLight.position.set(0, 0, 2);
+    this.mangoGroup.add(emojiLight);
   }
 
   // ───────────────────────── ОЧИСТКА ─────────────────────────
@@ -498,6 +510,25 @@ export class Mango3D {
     const builder = this.skinBuilders[skinId]
       || this.skinBuilders['mango_default'];
     builder.call(this);
+
+    // ═══ FIT: ограничиваем 3D модели чтобы не выходили за границы ═══
+    if (!this.mangoGroup.userData.isEmojiSkin) {
+      // Вычисляем bounding box после построения
+      const box = new THREE.Box3().setFromObject(this.mangoGroup);
+      const boxSize = new THREE.Vector3();
+      box.getSize(boxSize);
+      const maxDim = Math.max(boxSize.x, boxSize.y, boxSize.z);
+
+      // Максимально допустимый размер в единицах сцены
+      // Камера на 7.5 с FOV 50 — видимая область ~6.5 единиц
+      const MAX_3D_SIZE = 5.8;
+
+      if (maxDim > MAX_3D_SIZE) {
+        const fitScale = MAX_3D_SIZE / maxDim;
+        this.mangoGroup.scale.setScalar(fitScale);
+      }
+    }
+
     this.scene.add(this.mangoGroup);
   }
 
@@ -507,12 +538,7 @@ export class Mango3D {
 
   skinBuilders = {
 
-    // ═══════════════════════════════════════════════
-    //         COMMON и UNCOMMON — ЭМОДЗИ
-    //   Без вращения, без анимации сцены
-    // ═══════════════════════════════════════════════
-
-    // ── COMMON ─────────────────────────────────────────────
+    // ── COMMON — ЭМОДЗИ (большие, яркие) ──────────────────
 
     'default': function () {
       this._buildEmojiSkin('🥭', 0xff9800);
@@ -527,7 +553,7 @@ export class Mango3D {
     },
 
     'mango_small': function () {
-      this._buildEmojiSkin('🥭', 0xffb74d, 0.7);
+      this._buildEmojiSkin('🥭', 0xffb74d, 0.8);
     },
 
     'mango_round': function () {
@@ -538,26 +564,26 @@ export class Mango3D {
       this._buildEmojiSkin('🥭', 0xff8f00);
     },
 
-    // ── UNCOMMON ────────────────────────────────────────────
+    // ── UNCOMMON — ЭМОДЗИ (чуть ярче common) ──────────────
 
     'mango_golden_light': function () {
-      this._buildEmojiSkin('🥭', 0xffd54f);
+      this._buildEmojiSkin('🥭', 0xffd54f, 1.05);
     },
 
     'mango_red': function () {
-      this._buildEmojiSkin('🥭', 0xe53935);
+      this._buildEmojiSkin('🥭', 0xe53935, 1.05);
     },
 
     'mango_striped': function () {
-      this._buildEmojiSkin('🥭', 0xff8f00);
+      this._buildEmojiSkin('🥭', 0xff8f00, 1.05);
     },
 
     'mango_neon_green': function () {
-      this._buildEmojiSkin('🥭', 0x76ff03);
+      this._buildEmojiSkin('🥭', 0x76ff03, 1.05);
     },
 
     'mango_tropical': function () {
-      this._buildEmojiSkin('🥭', 0xff6f00);
+      this._buildEmojiSkin('🌴', 0xff6f00, 1.05);
     },
 
     // ── RARE ────────────────────────────────────────────────
@@ -565,7 +591,6 @@ export class Mango3D {
     'mango_crystal': function () {
       this._setAccentLight(0x80deea, 3.5);
 
-      // Полупрозрачное тело — PBR для правильного преломления
       const body = this.createMangoBody(0x80deea, {
         usePBR: true,
         roughness: 0.04,
@@ -575,7 +600,6 @@ export class Mango3D {
       });
       this.mangoGroup.add(body);
 
-      // Внутреннее свечение
       const inner = this.createMangoBody(0x00e5ff, {
         transparent: true, opacity: 0.25,
         emissive: 0x00e5ff, emissiveIntensity: 0.8,
@@ -583,7 +607,6 @@ export class Mango3D {
       inner.scale.setScalar(0.85);
       this.mangoGroup.add(inner);
 
-      // Кристаллы — октаэдры разных размеров
       for (let i = 0; i < 12; i++) {
         const size = 0.22 + Math.random() * 0.14;
         const geo = new THREE.OctahedronGeometry(size);
@@ -624,7 +647,6 @@ export class Mango3D {
       });
       this.mangoGroup.add(body);
 
-      // Морозный узор — кольца
       for (let i = 0; i < 5; i++) {
         const geo = new THREE.TorusGeometry(
           0.5 + i * 0.22, 0.012, 8, 40, Math.PI * (0.6 + i * 0.15),
@@ -640,7 +662,6 @@ export class Mango3D {
         this.mangoGroup.add(frost);
       }
 
-      // Ледяные шипы
       for (let i = 0; i < 20; i++) {
         const geo = new THREE.ConeGeometry(0.055, 0.42, 7);
         const mat = new THREE.MeshPhongMaterial({
@@ -658,7 +679,6 @@ export class Mango3D {
         this.mangoGroup.add(spike);
       }
 
-      // Снежинки
       for (let i = 0; i < 30; i++) {
         const s = this._makeSphere(0.028, 0xffffff, 0.85);
         const a = Math.random() * Math.PI * 2;
@@ -681,7 +701,6 @@ export class Mango3D {
     'mango_fire': function () {
       this._setAccentLight(0xff5722, 4.0);
 
-      // Тёмное лавовое тело с яркими прожилками
       this.mangoGroup.add(this.createMangoBody(0xbf360c, {
         shininess: 60,
         specular: 0xff6d00,
@@ -689,7 +708,6 @@ export class Mango3D {
         emissiveIntensity: 0.55,
       }));
 
-      // Лавовые трещины-прожилки
       for (let i = 0; i < 10; i++) {
         const geo = new THREE.TorusGeometry(
           1.16 - i * 0.01, 0.018, 6, 30, Math.PI * (0.3 + Math.random() * 0.3),
@@ -704,7 +722,6 @@ export class Mango3D {
         this.mangoGroup.add(crack);
       }
 
-      // Огненные языки
       const fireGroup = new THREE.Group();
       fireGroup.userData.isFire = true;
       for (let i = 0; i < 32; i++) {
@@ -730,7 +747,6 @@ export class Mango3D {
       }
       this.mangoGroup.add(fireGroup);
 
-      // Мерцающий огненный свет
       const fl = new THREE.PointLight(0xff5722, 4.0, 10);
       fl.position.set(0, 0.5, 0);
       fl.userData.flickerLight = true;
@@ -748,7 +764,6 @@ export class Mango3D {
         emissiveIntensity: 0.4,
       }));
 
-      // Электрические арки
       const arcGroup = new THREE.Group();
       arcGroup.userData.isArcs = true;
       for (let i = 0; i < 8; i++) {
@@ -768,7 +783,6 @@ export class Mango3D {
       }
       this.mangoGroup.add(arcGroup);
 
-      // Электрические искры
       const sparks = this._makeParticleCloud(
         25, { min: 1.38, max: 1.8 },
         [0x00e5ff, 0xffd740, 0xffffff],
@@ -784,7 +798,6 @@ export class Mango3D {
 
     'mango_rainbow': function () {
       this._setAccentLight(0xff4081, 2.5);
-      // Радужный градиент по вершинам
       const geo = new THREE.SphereGeometry(1.2, 96, 96);
       const pos = geo.attributes.position;
       const colArr = [];
@@ -817,7 +830,6 @@ export class Mango3D {
         usePBR: true, roughness: 0.45, metalness: 0.88,
       }));
 
-      // Шестерёнки с зубьями
       for (let g = 0; g < 4; g++) {
         const gGroup = new THREE.Group();
         const angle = (g / 4) * Math.PI * 2;
@@ -825,14 +837,12 @@ export class Mango3D {
           Math.cos(angle) * 1.38, (g % 2 === 0 ? 0.2 : -0.2), Math.sin(angle) * 1.38,
         );
 
-        // Диск шестерёнки
         const diskGeo = new THREE.CylinderGeometry(0.23, 0.23, 0.1, 18);
         const diskMat = new THREE.MeshPhongMaterial({
           color: 0x8d6e63, shininess: 120, specular: 0xd7ccc8,
         });
         gGroup.add(new THREE.Mesh(diskGeo, diskMat));
 
-        // Зубья
         for (let t = 0; t < 10; t++) {
           const toothGeo = new THREE.BoxGeometry(0.06, 0.1, 0.065);
           const tooth = new THREE.Mesh(toothGeo, diskMat);
@@ -842,7 +852,6 @@ export class Mango3D {
           gGroup.add(tooth);
         }
 
-        // Центральное отверстие (болт)
         const boltGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.12, 8);
         const boltMat = new THREE.MeshPhongMaterial({
           color: 0x37474f, shininess: 200,
@@ -855,7 +864,6 @@ export class Mango3D {
         this.mangoGroup.add(gGroup);
       }
 
-      // Медные трубки
       for (let i = 0; i < 3; i++) {
         const pipeGeo = new THREE.TorusGeometry(
           1.48, 0.065, 12, 24, Math.PI * 0.55,
@@ -870,7 +878,6 @@ export class Mango3D {
         this.mangoGroup.add(pipe);
       }
 
-      // Дым из трубок
       for (let i = 0; i < 18; i++) {
         const s = this._makeSphere(
           0.05 + Math.random() * 0.05, 0x90a4ae, 0.28,
@@ -893,7 +900,6 @@ export class Mango3D {
     'mango_diamond': function () {
       this._setAccentLight(0xe3f2fd, 5.0);
 
-      // Гранёное тело — низкополигональный алмаз
       const geo = new THREE.IcosahedronGeometry(1.3, 2);
       const mat = new THREE.MeshPhongMaterial({
         color: 0xb3e5fc,
@@ -908,7 +914,6 @@ export class Mango3D {
       body.castShadow = true;
       this.mangoGroup.add(body);
 
-      // Каркас
       const wireGeo = geo.clone();
       wireGeo.scale(1, 1.3, 1);
       const wire = new THREE.Mesh(
@@ -920,7 +925,6 @@ export class Mango3D {
       );
       this.mangoGroup.add(wire);
 
-      // Летающие искры
       const sparks = this._makeParticleCloud(
         45, { min: 1.6, max: 2.3 },
         [0xffffff, 0xe3f2fd, 0x80d8ff],
@@ -945,7 +949,6 @@ export class Mango3D {
         opacity: 0.85,
       }));
 
-      // Плазменные кольца — разные плоскости
       for (let i = 0; i < 5; i++) {
         const ring = this._makeHalo(
           1.42 + i * 0.16, 0.038,
@@ -961,7 +964,6 @@ export class Mango3D {
         this.mangoGroup.add(ring);
       }
 
-      // Плазменные шары по орбите
       for (let i = 0; i < 14; i++) {
         const s = this._makeSphere(
           0.065, i % 2 === 0 ? 0xe040fb : 0xb388ff, 0.85,
@@ -981,12 +983,10 @@ export class Mango3D {
 
     'mango_void': function () {
       this._setAccentLight(0x7c4dff, 3.0);
-      // Абсолютно чёрное тело с лёгким фиолетовым отсветом
       this.mangoGroup.add(this.createMangoBody(0x0a0010, {
         usePBR: true, roughness: 0.02, metalness: 0.95,
       }));
 
-      // Звёздное поле — два слоя
       const stars = this._makeParticleCloud(
         90, { min: 1.7, max: 3.0 },
         [0xffffff, 0x9c27b0, 0x3d5afe, 0xe040fb],
@@ -995,7 +995,6 @@ export class Mango3D {
       );
       this.mangoGroup.add(stars);
 
-      // Гравитационные кольца
       for (let i = 0; i < 4; i++) {
         const ring = this._makeHalo(
           1.5 + i * 0.25, 0.022, 0x9c27b0, 0.38,
@@ -1017,7 +1016,6 @@ export class Mango3D {
         emissive: 0x00e5ff, emissiveIntensity: 0.35,
       }));
 
-      // Голографические линии
       for (let i = 0; i < 12; i++) {
         const geo = new THREE.TorusGeometry(
           1.22 + i * 0.035, 0.015, 4, 48,
@@ -1032,7 +1030,6 @@ export class Mango3D {
         this.mangoGroup.add(ring);
       }
 
-      // Скан-линии
       for (let i = 0; i < 8; i++) {
         const geo = new THREE.PlaneGeometry(3.5, 0.022);
         const mat = new THREE.MeshBasicMaterial({
@@ -1057,7 +1054,6 @@ export class Mango3D {
         shininess: 40, specular: 0xd7ccc8,
       }));
 
-      // Золотые руны по орбите
       for (let i = 0; i < 8; i++) {
         const geo = new THREE.RingGeometry(0.14, 0.26, 6);
         const mat = new THREE.MeshPhongMaterial({
@@ -1079,7 +1075,6 @@ export class Mango3D {
         this.mangoGroup.add(rune);
       }
 
-      // Экваториальное золотое кольцо
       const ring = this._makeHalo(1.48, 0.058, 0xffd54f, 0.75);
       this.mangoGroup.add(ring);
 
@@ -1096,7 +1091,6 @@ export class Mango3D {
         emissive: 0xffa000, emissiveIntensity: 0.28,
       }));
 
-      // Корона с зубцами
       const crownBase = new THREE.Mesh(
         new THREE.TorusGeometry(1.02, 0.09, 14, 50),
         new THREE.MeshPhongMaterial({
@@ -1117,7 +1111,6 @@ export class Mango3D {
         this.mangoGroup.add(spike);
       }
 
-      // Золотые искры
       const sparks = this._makeParticleCloud(
         40, { min: 1.8, max: 2.8 },
         [0xffd700, 0xffeb3b, 0xffa000],
@@ -1137,7 +1130,6 @@ export class Mango3D {
         emissive: 0x4a148c, emissiveIntensity: 0.5,
       }));
 
-      // Спиральная галактика — 3 рукава
       const galaxy = new THREE.Group();
       galaxy.userData.isGalaxy = true;
       for (let arm = 0; arm < 3; arm++) {
@@ -1175,7 +1167,6 @@ export class Mango3D {
         emissive: 0x4a0000, emissiveIntensity: 0.4,
       }));
 
-      // Чешуя — 4 ряда конусов
       for (let row = 0; row < 4; row++) {
         const count = 8 + row * 3;
         for (let i = 0; i < count; i++) {
@@ -1201,7 +1192,6 @@ export class Mango3D {
         }
       }
 
-      // Светящиеся глаза
       for (let side = -1; side <= 1; side += 2) {
         const eyeGeo = new THREE.SphereGeometry(0.13, 18, 18);
         const eyeMat = new THREE.MeshPhongMaterial({
@@ -1228,7 +1218,6 @@ export class Mango3D {
         emissiveIntensity: 0.9,
       }));
 
-      // Крылья
       for (let side = -1; side <= 1; side += 2) {
         const wingGroup = new THREE.Group();
         for (let f = 0; f < 7; f++) {
@@ -1257,7 +1246,6 @@ export class Mango3D {
         this.mangoGroup.add(wingGroup);
       }
 
-      // Огненный хвост
       for (let i = 0; i < 35; i++) {
         const s = this._makeSphere(
           0.045 + Math.random() * 0.075,
@@ -1290,7 +1278,6 @@ export class Mango3D {
         emissiveIntensity: 0.95,
       }));
 
-      // Ореолы
       for (let i = 0; i < 5; i++) {
         const halo = this._makeHalo(
           1.62 - i * 0.16, 0.04 - i * 0.002,
@@ -1302,7 +1289,6 @@ export class Mango3D {
         this.mangoGroup.add(halo);
       }
 
-      // Лучи
       for (let i = 0; i < 18; i++) {
         const geo = new THREE.PlaneGeometry(0.065, 3.2);
         const mat = new THREE.MeshBasicMaterial({
@@ -1359,7 +1345,6 @@ export class Mango3D {
         emissive: 0x6a1b9a, emissiveIntensity: 0.55,
       }));
 
-      // Циферблат
       const faceGeo = new THREE.CircleGeometry(1.24, 80);
       const faceMat = new THREE.MeshBasicMaterial({
         color: 0x12003a, transparent: true, opacity: 0.72,
@@ -1369,7 +1354,6 @@ export class Mango3D {
       face.position.z = 1.02;
       this.mangoGroup.add(face);
 
-      // Метки
       for (let i = 0; i < 12; i++) {
         const isMain = i % 3 === 0;
         const geo = new THREE.BoxGeometry(
@@ -1385,7 +1369,6 @@ export class Mango3D {
         this.mangoGroup.add(tick);
       }
 
-      // Часовая стрелка
       const hGeo = new THREE.BoxGeometry(0.05, 0.56, 0.02);
       const hMat = new THREE.MeshBasicMaterial({ color: 0xfff9c4 });
       const hour = new THREE.Mesh(hGeo, hMat);
@@ -1395,7 +1378,6 @@ export class Mango3D {
       hour.userData.pivotY = 0;
       this.mangoGroup.add(hour);
 
-      // Минутная
       const mGeo = new THREE.BoxGeometry(0.034, 0.82, 0.02);
       const mMat = new THREE.MeshBasicMaterial({ color: 0xffd54f });
       const minute = new THREE.Mesh(mGeo, mMat);
@@ -1405,7 +1387,6 @@ export class Mango3D {
       minute.userData.pivotY = 0;
       this.mangoGroup.add(minute);
 
-      // Секундная (красная)
       const sGeo = new THREE.BoxGeometry(0.022, 0.98, 0.02);
       const sMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
       const second = new THREE.Mesh(sGeo, sMat);
@@ -1432,7 +1413,6 @@ export class Mango3D {
         emissive: 0xffab00, emissiveIntensity: 1.0,
       }));
 
-      // Корона
       const crownBase = new THREE.Mesh(
         new THREE.TorusGeometry(1.08, 0.095, 16, 60),
         new THREE.MeshPhongMaterial({
@@ -1452,7 +1432,6 @@ export class Mango3D {
         spike.lookAt(Math.cos(angle) * 2.5, 3.4, Math.sin(angle) * 2.5);
         this.mangoGroup.add(spike);
 
-        // Рубин на каждом зубце
         const gemGeo = new THREE.OctahedronGeometry(0.09);
         const gemMat = new THREE.MeshPhongMaterial({
           color: 0xff1744, shininess: 300, specular: 0xffffff,
@@ -1465,7 +1444,6 @@ export class Mango3D {
         this.mangoGroup.add(gem);
       }
 
-      // Лучи
       for (let i = 0; i < 18; i++) {
         const geo = new THREE.PlaneGeometry(0.13, 5.0);
         const mat = new THREE.MeshBasicMaterial({
@@ -1504,7 +1482,6 @@ export class Mango3D {
         this.mangoGroup.add(body);
       }
 
-      // Поток частиц вдоль лемнискаты
       for (let i = 0; i < 50; i++) {
         const s = this._makeSphere(0.038, 0xffeb3b, 0.85);
         s.userData.eternalStream = true;
@@ -1525,7 +1502,6 @@ export class Mango3D {
         emissive: 0x6a1b9a, emissiveIntensity: 0.85,
       }));
 
-      // Кольца Сатурна
       const ringColors = [0xe040fb, 0x7c4dff, 0x00bcd4, 0xff4081, 0xffeb3b];
       for (let i = 0; i < 5; i++) {
         const geo = new THREE.RingGeometry(
@@ -1542,7 +1518,6 @@ export class Mango3D {
         this.mangoGroup.add(ring);
       }
 
-      // Луны с орбитами
       for (let i = 0; i < 4; i++) {
         const moonGroup = new THREE.Group();
         const moonGeo = new THREE.SphereGeometry(0.14, 24, 24);
@@ -1571,7 +1546,6 @@ export class Mango3D {
         emissive: 0x4a0080, emissiveIntensity: 0.55,
       }));
 
-      // Аккреционные диски
       const diskColors = [0xff00ff, 0x00bcd4, 0xff9800];
       for (let i = 0; i < 3; i++) {
         const geo = new THREE.RingGeometry(
@@ -1588,7 +1562,6 @@ export class Mango3D {
         this.mangoGroup.add(disk);
       }
 
-      // Спираль из засасываемых частиц
       for (let i = 0; i < 80; i++) {
         const col = [0xff00ff, 0x00bcd4, 0xffffff, 0xff9800][i % 4];
         const s = this._makeSphere(0.038 + Math.random() * 0.03, col, 0.88);
@@ -1615,9 +1588,7 @@ export class Mango3D {
     const t = this.clock;
 
     if (this.mangoGroup) {
-      // FIX: эмодзи-скины (common/uncommon) НЕ анимируются
       if (!this.mangoGroup.userData.isEmojiSkin) {
-        // Базовое вращение и покачивание — только для 3D моделей
         this.mangoGroup.rotation.y += 0.007;
         this.mangoGroup.rotation.x  = Math.sin(t * 0.45) * 0.04;
         this.mangoGroup.position.y  = Math.sin(t * 0.75) * 0.08;
@@ -1625,9 +1596,18 @@ export class Mango3D {
 
       this.mangoGroup.traverse(obj => {
         if (!obj.userData) return;
-        // Пропускаем статичные эмодзи
-        if (obj.userData.isStaticEmoji) return;
+        if (obj.userData.isStaticEmoji && !obj.userData.isGlowLayer) return;
         const ud = obj.userData;
+
+        // ═══ Пульсация свечения для эмодзи-скинов ═══
+        if (ud.isGlowLayer) {
+          const pulse = 0.85 + Math.sin(t * 1.8 + (ud.glowPulsePhase || 0)) * 0.15;
+          obj.material.opacity = pulse * 0.7;
+          const sc = 1 + Math.sin(t * 1.2 + (ud.glowPulsePhase || 0)) * 0.04;
+          // Пульсация только для свечения, не для самого эмодзи
+          obj.scale.setScalar(obj.scale.x > 5 ? 6.5 * sc : 4.8 * sc);
+          return;
+        }
 
         if (ud.spin) {
           const sp = ud.spinSpeed ?? 0.022;
@@ -1679,10 +1659,8 @@ export class Mango3D {
           });
         }
 
-        // Стрелки часов — вращение вокруг центра
         if (ud.isClock) {
           obj.rotation.z -= ud.clockSpeed ?? 0.01;
-          // Смещаем центр вращения к основанию стрелки
           const h = (obj.geometry?.parameters?.height ?? 0.56) / 2;
           obj.position.x = Math.sin(obj.rotation.z) * h;
           obj.position.y = Math.cos(obj.rotation.z) * h;
@@ -1830,17 +1808,15 @@ export class Mango3D {
     const start = performance.now();
     const isEmoji = this.mangoGroup.userData.isEmojiSkin;
 
-    const animate = () => {
+    const anim = () => {
       const elapsed = performance.now() - start;
       const p = Math.min(elapsed / 180, 1);
       const squeeze = Math.sin(p * Math.PI);
       if (this.mangoGroup) {
         if (isEmoji) {
-          // Простой пульс для эмодзи
           const s = 1 + squeeze * 0.15;
           this.mangoGroup.scale.set(s, s, s);
         } else {
-          // Squash & stretch для 3D
           this.mangoGroup.scale.set(
             1 + squeeze * 0.16,
             1 - squeeze * 0.16,
@@ -1848,10 +1824,10 @@ export class Mango3D {
           );
         }
       }
-      if (p < 1) requestAnimationFrame(animate);
+      if (p < 1) requestAnimationFrame(anim);
       else if (this.mangoGroup) this.mangoGroup.scale.set(1, 1, 1);
     };
-    requestAnimationFrame(animate);
+    requestAnimationFrame(anim);
   }
 
   onResize() {
