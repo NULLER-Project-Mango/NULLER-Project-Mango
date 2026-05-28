@@ -20,7 +20,7 @@ export const MANGO_SKINS = [
   { id: 'mango_red',           name: 'Красное Манго',           rarity: 'uncommon',  price: 40000,       clickBonus: 4,    type: 'skin', render: '2d', emoji: '🥭', description: 'Редкий красный сорт' },
   { id: 'mango_striped',       name: 'Полосатое Манго',         rarity: 'uncommon',  price: 45000,       clickBonus: 4,    type: 'skin', render: '2d', emoji: '🥭', description: 'С причудливыми полосками' },
   { id: 'mango_neon_green',    name: 'Неоново-зелёное Манго',   rarity: 'uncommon',  price: 50000,       clickBonus: 5,    type: 'skin', render: '2d', emoji: '🥭', description: 'Светится зелёным' },
-  { id: 'mango_tropical',      name: 'Тропическое Манго',       rarity: 'uncommon',  price: 55000,       clickBonus: 5,    type: 'skin', render: '2d', emoji: '🌴', description: 'Прямо с пальмы!' },
+  { id: 'mango_tropical',      name: 'Тропическое Манго',       rarity: 'uncommon',  price: 55000,       clickBonus: 5,    type: 'skin', render: '2d', emoji: '🥭', description: 'Прямо с пальмы!' },
 
   { id: 'mango_crystal',       name: 'Кристальное Манго',       rarity: 'rare',      price: 150000,      clickBonus: 8,    type: 'skin', render: '3d', emoji: '💎', description: 'Сделано из чистого кристалла' },
   { id: 'mango_ice',           name: 'Ледяное Манго',           rarity: 'rare',      price: 180000,      clickBonus: 9,    type: 'skin', render: '3d', emoji: '🧊', description: 'Замороженное в вечном льду' },
@@ -90,29 +90,27 @@ export const UPGRADES = [
   { id: 'crit_power_2',    name: 'Разрушительный крит',  rarity: 'epic',      price: 2000000,     effect: 'critMulti',    value: 1.0,  type: 'upgrade', emoji: '💥', description: '+1x урон крита' },
 ];
 
+// ═══════════════════════════════════════════════════════════
+//   КОЛЛЕКЦИОНКИ: питомцы убраны, аксессуары → ауры
+// ═══════════════════════════════════════════════════════════
 export const COLLECTIBLES = [
-  { id: 'hat_basic',       name: 'Шляпа',                rarity: 'common',    price: 8000,        type: 'accessory', emoji: '🎩', description: 'Элегантная шляпа для манго' },
-  { id: 'glasses_cool',    name: 'Крутые очки',          rarity: 'common',    price: 12000,       type: 'accessory', emoji: '😎', description: 'Стильные солнечные очки' },
-  { id: 'bow_tie',         name: 'Бабочка',              rarity: 'common',    price: 10000,       type: 'accessory', emoji: '🎀', description: 'Галстук-бабочка' },
-  { id: 'crown_bronze',    name: 'Бронзовая корона',     rarity: 'uncommon',  price: 50000,       type: 'accessory', emoji: '👑', description: 'Корона из бронзы' },
-  { id: 'crown_silver',    name: 'Серебряная корона',    rarity: 'rare',      price: 200000,      type: 'accessory', emoji: '👑', description: 'Серебряная корона' },
-  { id: 'crown_gold',      name: 'Золотая корона',       rarity: 'epic',      price: 1000000,     type: 'accessory', emoji: '👑', description: 'Золотая корона для манго' },
-  { id: 'crown_diamond',   name: 'Алмазная корона',      rarity: 'legendary', price: 5000000,     type: 'accessory', emoji: '👑', description: 'Усыпана бриллиантами' },
-  { id: 'wings_angel',     name: 'Крылья ангела',        rarity: 'epic',      price: 1500000,     type: 'accessory', emoji: '😇', description: 'Небесные крылья' },
-  { id: 'wings_demon',     name: 'Крылья демона',        rarity: 'epic',      price: 1500000,     type: 'accessory', emoji: '😈', description: 'Тёмные крылья' },
-  { id: 'wings_dragon',    name: 'Крылья дракона',       rarity: 'legendary', price: 7500000,     type: 'accessory', emoji: '🐲', description: 'Могучие крылья' },
-  { id: 'aura_fire',       name: 'Огненная аура',        rarity: 'rare',      price: 300000,      type: 'accessory', emoji: '🔥', description: 'Пылающая аура' },
-  { id: 'aura_ice',        name: 'Ледяная аура',         rarity: 'rare',      price: 300000,      type: 'accessory', emoji: '❄️', description: 'Морозная аура' },
-  { id: 'aura_lightning',  name: 'Молниевая аура',       rarity: 'epic',      price: 800000,      type: 'accessory', emoji: '⚡', description: 'Электрическая аура' },
-  { id: 'aura_cosmic',     name: 'Космическая аура',     rarity: 'mythic',    price: 20000000,    type: 'accessory', emoji: '🌌', description: 'Аура космоса' },
+  // ── АУРЫ (бывшие аксессуары) ──────────────────────────
+  { id: 'aura_soft',       name: 'Нежная аура',          rarity: 'common',    price: 8000,        type: 'aura', emoji: '🫧', description: 'Мягкое обволакивающее свечение' },
+  { id: 'aura_cool',       name: 'Стильная аура',        rarity: 'common',    price: 12000,       type: 'aura', emoji: '💙', description: 'Холодные голубые частицы' },
+  { id: 'aura_rose',       name: 'Розовая аура',         rarity: 'common',    price: 10000,       type: 'aura', emoji: '🌸', description: 'Элегантные розовые искры' },
+  { id: 'aura_bronze',     name: 'Бронзовое сияние',     rarity: 'uncommon',  price: 50000,       type: 'aura', emoji: '🥉', description: 'Тёплое бронзовое кольцо' },
+  { id: 'aura_silver',     name: 'Серебряное сияние',    rarity: 'rare',      price: 200000,      type: 'aura', emoji: '🥈', description: 'Холодный серебряный блеск' },
+  { id: 'aura_gold',       name: 'Золотое сияние',       rarity: 'epic',      price: 1000000,     type: 'aura', emoji: '🥇', description: 'Королевское золотое свечение' },
+  { id: 'aura_diamond',    name: 'Алмазное сияние',      rarity: 'legendary', price: 5000000,     type: 'aura', emoji: '💎', description: 'Ослепительные алмазные лучи' },
+  { id: 'aura_angel',      name: 'Ангельская аура',      rarity: 'epic',      price: 1500000,     type: 'aura', emoji: '😇', description: 'Святое белое сияние с перьями' },
+  { id: 'aura_demon',      name: 'Демоническая аура',    rarity: 'epic',      price: 1500000,     type: 'aura', emoji: '😈', description: 'Тёмное багровое пламя' },
+  { id: 'aura_dragon',     name: 'Драконья аура',        rarity: 'legendary', price: 7500000,     type: 'aura', emoji: '🐲', description: 'Огненно-фиолетовая мощь' },
+  { id: 'aura_fire',       name: 'Огненная аура',        rarity: 'rare',      price: 300000,      type: 'aura', emoji: '🔥', description: 'Пылающие языки пламени' },
+  { id: 'aura_ice',        name: 'Ледяная аура',         rarity: 'rare',      price: 300000,      type: 'aura', emoji: '❄️', description: 'Морозные кристаллы и снежинки' },
+  { id: 'aura_lightning',  name: 'Молниевая аура',       rarity: 'epic',      price: 800000,      type: 'aura', emoji: '⚡', description: 'Электрические разряды' },
+  { id: 'aura_cosmic',     name: 'Космическая аура',     rarity: 'mythic',    price: 20000000,    type: 'aura', emoji: '🌌', description: 'Звёзды и туманности вокруг' },
 
-  { id: 'pet_cat',         name: 'Кот-помощник',         rarity: 'uncommon',  price: 60000,       type: 'pet', emoji: '🐱', description: 'Мяукает при кликах' },
-  { id: 'pet_dog',         name: 'Пёс-охранник',         rarity: 'uncommon',  price: 60000,       type: 'pet', emoji: '🐶', description: 'Охраняет ваше манго' },
-  { id: 'pet_parrot',      name: 'Попугай',              rarity: 'rare',      price: 250000,      type: 'pet', emoji: '🦜', description: 'Тропический друг' },
-  { id: 'pet_dragon_baby', name: 'Маленький дракон',     rarity: 'epic',      price: 1200000,     type: 'pet', emoji: '🐉', description: 'Дышит огнём' },
-  { id: 'pet_phoenix',     name: 'Феникс',               rarity: 'legendary', price: 5500000,     type: 'pet', emoji: '🦅', description: 'Бессмертная птица' },
-  { id: 'pet_unicorn',     name: 'Единорог',             rarity: 'mythic',    price: 28000000,    type: 'pet', emoji: '🦄', description: 'Магическое существо' },
-
+  // ── ФОНЫ ──────────────────────────────────────────────
   { id: 'bg_sunset',       name: 'Закат',                rarity: 'common',    price: 20000,       type: 'background', emoji: '🌅', description: 'Тёплый закат' },
   { id: 'bg_ocean',        name: 'Океан',                rarity: 'common',    price: 20000,       type: 'background', emoji: '🌊', description: 'Морской бриз' },
   { id: 'bg_forest',       name: 'Лес',                  rarity: 'uncommon',  price: 40000,       type: 'background', emoji: '🌳', description: 'Тропический лес' },
@@ -123,6 +121,7 @@ export const COLLECTIBLES = [
   { id: 'bg_dimension',    name: 'Другое измерение',     rarity: 'legendary', price: 4500000,     type: 'background', emoji: '🕳️', description: 'Портал в другой мир' },
   { id: 'bg_heaven',       name: 'Небеса',               rarity: 'mythic',    price: 22000000,    type: 'background', emoji: '☁️', description: 'Божественные небеса' },
 
+  // ── СЛЕДЫ ─────────────────────────────────────────────
   { id: 'trail_sparkle',   name: 'Искры',                rarity: 'uncommon',  price: 35000,       type: 'trail', emoji: '✨', description: 'Искры при клике' },
   { id: 'trail_hearts',    name: 'Сердечки',             rarity: 'uncommon',  price: 40000,       type: 'trail', emoji: '❤️', description: 'Летящие сердечки' },
   { id: 'trail_stars',     name: 'Звёзды',               rarity: 'rare',      price: 180000,      type: 'trail', emoji: '⭐', description: 'Звёздный след' },
@@ -130,21 +129,25 @@ export const COLLECTIBLES = [
   { id: 'trail_rainbow',   name: 'Радужный след',        rarity: 'epic',      price: 900000,      type: 'trail', emoji: '🌈', description: 'Радуга за курсором' },
   { id: 'trail_galaxy',    name: 'Галактический след',   rarity: 'legendary', price: 4000000,     type: 'trail', emoji: '🌌', description: 'Космическая пыль' },
 
+  // ── ЭФФЕКТЫ КЛИКА ─────────────────────────────────────
   { id: 'effect_pop',      name: 'Лопание',              rarity: 'common',    price: 15000,       type: 'effect', emoji: '💨', description: 'Эффект лопания' },
   { id: 'effect_coins',    name: 'Монетки',              rarity: 'uncommon',  price: 50000,       type: 'effect', emoji: '🪙', description: 'Летящие монетки' },
   { id: 'effect_explosion',name: 'Взрыв',                rarity: 'rare',      price: 250000,      type: 'effect', emoji: '💥', description: 'Мощный взрыв' },
   { id: 'effect_portal',   name: 'Портал',               rarity: 'epic',      price: 1100000,     type: 'effect', emoji: '🌀', description: 'Открытие портала' },
   { id: 'effect_nuke',     name: 'Ядерный взрыв',        rarity: 'legendary', price: 5500000,     type: 'effect', emoji: '☢️', description: 'Ядерный гриб' },
 
+  // ── МУЗЫКА ────────────────────────────────────────────
   { id: 'music_chill',     name: 'Чил музыка',           rarity: 'common',    price: 10000,       type: 'music', emoji: '🎵', description: 'Расслабляющая мелодия' },
   { id: 'music_epic',      name: 'Эпик музыка',          rarity: 'rare',      price: 150000,      type: 'music', emoji: '🎶', description: 'Эпическая музыка' },
   { id: 'music_retro',     name: 'Ретро музыка',         rarity: 'uncommon',  price: 45000,       type: 'music', emoji: '📻', description: '8-bit мелодия' },
 
+  // ── РАМКИ ─────────────────────────────────────────────
   { id: 'frame_wood',      name: 'Деревянная рамка',     rarity: 'common',    price: 9000,        type: 'frame', emoji: '🪵', description: 'Простая деревянная рамка' },
   { id: 'frame_gold',      name: 'Золотая рамка',        rarity: 'rare',      price: 200000,      type: 'frame', emoji: '🖼️', description: 'Золотая рамка' },
   { id: 'frame_diamond',   name: 'Алмазная рамка',       rarity: 'epic',      price: 900000,      type: 'frame', emoji: '💎', description: 'Сияющая рамка' },
   { id: 'frame_animated',  name: 'Анимированная рамка',  rarity: 'legendary', price: 4200000,     type: 'frame', emoji: '🌟', description: 'Живая рамка' },
 
+  // ── ТИТУЛЫ ────────────────────────────────────────────
   { id: 'title_beginner',  name: 'Титул: Новичок',       rarity: 'common',    price: 5000,        type: 'title', emoji: '📛', description: 'Титул "Новичок"' },
   { id: 'title_clicker',   name: 'Титул: Кликер',        rarity: 'uncommon',  price: 30000,       type: 'title', emoji: '📛', description: 'Титул "Кликер"' },
   { id: 'title_master',    name: 'Титул: Мастер',        rarity: 'rare',      price: 150000,      type: 'title', emoji: '📛', description: 'Титул "Мастер"' },
@@ -153,27 +156,29 @@ export const COLLECTIBLES = [
   { id: 'title_creator',   name: 'Титул: Создатель',     rarity: 'mythic',    price: 25000000,    type: 'title', emoji: '📛', description: 'Титул "Создатель"' },
 ];
 
+// ═══════════════════════════════════════════════════════════
+//   РЕЦЕПТЫ: без питомцев, аксессуары → ауры
+// ═══════════════════════════════════════════════════════════
 export const RECIPES = [
-  { id: 'recipe_1',  name: 'Кристальное манго',  result: 'mango_crystal',     ingredients: [{ id: 'mango_green', qty: 3 }, { id: 'mango_round', qty: 2 }],  cost: 50000 },
-  { id: 'recipe_2',  name: 'Огненное манго',     result: 'mango_fire',        ingredients: [{ id: 'mango_red', qty: 3 }, { id: 'aura_fire', qty: 1 }],      cost: 100000 },
-  { id: 'recipe_3',  name: 'Ледяное манго',      result: 'mango_ice',         ingredients: [{ id: 'mango_crystal', qty: 1 }, { id: 'aura_ice', qty: 1 }],    cost: 120000 },
-  { id: 'recipe_4',  name: 'Радужное манго',     result: 'mango_rainbow',     ingredients: [{ id: 'mango_fire', qty: 1 }, { id: 'mango_ice', qty: 1 }, { id: 'mango_electric', qty: 1 }], cost: 300000 },
-  { id: 'recipe_5',  name: 'Алмазное манго',     result: 'mango_diamond',     ingredients: [{ id: 'mango_crystal', qty: 3 }, { id: 'crown_silver', qty: 1 }], cost: 500000 },
-  { id: 'recipe_6',  name: 'Галактическое манго',result: 'mango_galaxy',      ingredients: [{ id: 'mango_diamond', qty: 1 }, { id: 'mango_void', qty: 1 }, { id: 'bg_space', qty: 1 }], cost: 2000000 },
-  { id: 'recipe_7',  name: 'Драконье манго',     result: 'mango_dragon',      ingredients: [{ id: 'mango_fire', qty: 2 }, { id: 'pet_dragon_baby', qty: 1 }, { id: 'wings_dragon', qty: 1 }], cost: 3000000 },
-  { id: 'recipe_8',  name: 'Манго Феникса',      result: 'mango_phoenix',     ingredients: [{ id: 'mango_dragon', qty: 1 }, { id: 'pet_phoenix', qty: 1 }], cost: 4000000 },
-  { id: 'recipe_9',  name: 'Небесное манго',     result: 'mango_celestial',   ingredients: [{ id: 'mango_phoenix', qty: 1 }, { id: 'mango_galaxy', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 10000000 },
-  { id: 'recipe_10', name: 'Квантовое манго',    result: 'mango_quantum',     ingredients: [{ id: 'mango_celestial', qty: 1 }, { id: 'mango_cyberpunk', qty: 2 }], cost: 15000000 },
-  { id: 'recipe_11', name: 'Манго Времени',      result: 'mango_time',        ingredients: [{ id: 'mango_quantum', qty: 1 }, { id: 'mango_ancient', qty: 2 }], cost: 20000000 },
-  { id: 'recipe_12', name: 'Божественное манго', result: 'mango_divine',      ingredients: [{ id: 'mango_time', qty: 1 }, { id: 'mango_celestial', qty: 1 }, { id: 'crown_diamond', qty: 1 }], cost: 50000000 },
-  { id: 'recipe_13', name: 'Вечное манго',       result: 'mango_eternal',     ingredients: [{ id: 'mango_divine', qty: 2 }, { id: 'bg_heaven', qty: 1 }], cost: 80000000 },
-  { id: 'recipe_14', name: 'Космическое манго',  result: 'mango_cosmic',      ingredients: [{ id: 'mango_eternal', qty: 1 }, { id: 'mango_quantum', qty: 1 }, { id: 'aura_cosmic', qty: 2 }], cost: 200000000 },
-  { id: 'recipe_15', name: 'Манго Сингулярности',result: 'mango_singularity', ingredients: [{ id: 'mango_cosmic', qty: 2 }, { id: 'mango_divine', qty: 1 }], cost: 500000000 },
-  { id: 'recipe_16', name: 'Золотая корона',     result: 'crown_gold',        ingredients: [{ id: 'crown_silver', qty: 2 }, { id: 'crown_bronze', qty: 3 }], cost: 500000 },
-  { id: 'recipe_17', name: 'Алмазная корона',    result: 'crown_diamond',     ingredients: [{ id: 'crown_gold', qty: 2 }], cost: 2500000 },
-  { id: 'recipe_18', name: 'Крылья дракона',     result: 'wings_dragon',      ingredients: [{ id: 'wings_angel', qty: 1 }, { id: 'wings_demon', qty: 1 }, { id: 'aura_fire', qty: 2 }], cost: 3500000 },
-  { id: 'recipe_19', name: 'Единорог',           result: 'pet_unicorn',       ingredients: [{ id: 'pet_phoenix', qty: 1 }, { id: 'trail_rainbow', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 15000000 },
-  { id: 'recipe_20', name: 'Космическая аура',   result: 'aura_cosmic',       ingredients: [{ id: 'aura_fire', qty: 1 }, { id: 'aura_ice', qty: 1 }, { id: 'aura_lightning', qty: 1 }], cost: 8000000 },
+  { id: 'recipe_1',  name: 'Кристальное манго',    result: 'mango_crystal',     ingredients: [{ id: 'mango_green', qty: 3 }, { id: 'mango_round', qty: 2 }],  cost: 50000 },
+  { id: 'recipe_2',  name: 'Огненное манго',       result: 'mango_fire',        ingredients: [{ id: 'mango_red', qty: 3 }, { id: 'aura_fire', qty: 1 }],       cost: 100000 },
+  { id: 'recipe_3',  name: 'Ледяное манго',        result: 'mango_ice',         ingredients: [{ id: 'mango_crystal', qty: 1 }, { id: 'aura_ice', qty: 1 }],     cost: 120000 },
+  { id: 'recipe_4',  name: 'Радужное манго',        result: 'mango_rainbow',     ingredients: [{ id: 'mango_fire', qty: 1 }, { id: 'mango_ice', qty: 1 }, { id: 'mango_electric', qty: 1 }], cost: 300000 },
+  { id: 'recipe_5',  name: 'Алмазное манго',        result: 'mango_diamond',     ingredients: [{ id: 'mango_crystal', qty: 3 }, { id: 'aura_silver', qty: 1 }],  cost: 500000 },
+  { id: 'recipe_6',  name: 'Галактическое манго',   result: 'mango_galaxy',      ingredients: [{ id: 'mango_diamond', qty: 1 }, { id: 'mango_void', qty: 1 }, { id: 'bg_space', qty: 1 }], cost: 2000000 },
+  { id: 'recipe_7',  name: 'Драконье манго',        result: 'mango_dragon',      ingredients: [{ id: 'mango_fire', qty: 2 }, { id: 'aura_dragon', qty: 1 }, { id: 'aura_fire', qty: 1 }], cost: 3000000 },
+  { id: 'recipe_8',  name: 'Манго Феникса',         result: 'mango_phoenix',     ingredients: [{ id: 'mango_dragon', qty: 1 }, { id: 'aura_angel', qty: 1 }, { id: 'aura_fire', qty: 1 }], cost: 4000000 },
+  { id: 'recipe_9',  name: 'Небесное манго',        result: 'mango_celestial',   ingredients: [{ id: 'mango_phoenix', qty: 1 }, { id: 'mango_galaxy', qty: 1 }, { id: 'aura_cosmic', qty: 1 }], cost: 10000000 },
+  { id: 'recipe_10', name: 'Квантовое манго',       result: 'mango_quantum',     ingredients: [{ id: 'mango_celestial', qty: 1 }, { id: 'mango_cyberpunk', qty: 2 }], cost: 15000000 },
+  { id: 'recipe_11', name: 'Манго Времени',         result: 'mango_time',        ingredients: [{ id: 'mango_quantum', qty: 1 }, { id: 'mango_ancient', qty: 2 }], cost: 20000000 },
+  { id: 'recipe_12', name: 'Божественное манго',    result: 'mango_divine',      ingredients: [{ id: 'mango_time', qty: 1 }, { id: 'mango_celestial', qty: 1 }, { id: 'aura_diamond', qty: 1 }], cost: 50000000 },
+  { id: 'recipe_13', name: 'Вечное манго',          result: 'mango_eternal',     ingredients: [{ id: 'mango_divine', qty: 2 }, { id: 'bg_heaven', qty: 1 }], cost: 80000000 },
+  { id: 'recipe_14', name: 'Космическое манго',     result: 'mango_cosmic',      ingredients: [{ id: 'mango_eternal', qty: 1 }, { id: 'mango_quantum', qty: 1 }, { id: 'aura_cosmic', qty: 2 }], cost: 200000000 },
+  { id: 'recipe_15', name: 'Манго Сингулярности',   result: 'mango_singularity', ingredients: [{ id: 'mango_cosmic', qty: 2 }, { id: 'mango_divine', qty: 1 }], cost: 500000000 },
+  { id: 'recipe_16', name: 'Золотое сияние',        result: 'aura_gold',         ingredients: [{ id: 'aura_silver', qty: 2 }, { id: 'aura_bronze', qty: 3 }], cost: 500000 },
+  { id: 'recipe_17', name: 'Алмазное сияние',       result: 'aura_diamond',      ingredients: [{ id: 'aura_gold', qty: 2 }], cost: 2500000 },
+  { id: 'recipe_18', name: 'Драконья аура',         result: 'aura_dragon',       ingredients: [{ id: 'aura_angel', qty: 1 }, { id: 'aura_demon', qty: 1 }, { id: 'aura_fire', qty: 2 }], cost: 3500000 },
+  { id: 'recipe_19', name: 'Космическая аура',      result: 'aura_cosmic',       ingredients: [{ id: 'aura_fire', qty: 1 }, { id: 'aura_ice', qty: 1 }, { id: 'aura_lightning', qty: 1 }], cost: 8000000 },
 ];
 
 export const MANGO_LEVELS = [
@@ -202,10 +207,6 @@ export function getItemById(id) {
   return getAllItems().find(item => item.id === id);
 }
 
-// Максимальное количество предмета в инвентаре:
-// - апгрейды и скины — без лимита (Infinity)
-// - всё остальное — 1 штука
-// Если у предмета задано поле maxCount — используем его
 export function getItemMaxCount(item) {
   if (!item) return 1;
   if (typeof item.maxCount === 'number') return item.maxCount;
