@@ -1579,6 +1579,259 @@ export class Mango3D {
   };
 
   // ═══════════════════════════════════════════════════════════
+  //                   СИСТЕМА АУР
+  // ═══════════════════════════════════════════════════════════
+
+  setAuras(auraIds) {
+    // Удаляем старые ауры
+    if (this._auraGroup) {
+      if (this.mangoGroup) this.mangoGroup.remove(this._auraGroup);
+      this.disposeObject(this._auraGroup);
+      this._auraGroup = null;
+    }
+
+    if (!auraIds || auraIds.length === 0 || !this.mangoGroup) return;
+
+    this._auraGroup = new THREE.Group();
+    this._auraGroup.userData.isAuraGroup = true;
+
+    auraIds.forEach(id => {
+      const builder = this.auraBuilders[id];
+      if (builder) builder.call(this, this._auraGroup);
+    });
+
+    this.mangoGroup.add(this._auraGroup);
+  }
+
+  // Базовые примитивы для аур
+  _auraGlow(group, color, radius = 2.2, opacity = 0.25) {
+    const geo = new THREE.SphereGeometry(radius, 32, 32);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity, side: THREE.BackSide,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.auraPulse = true;
+    mesh.userData.auraPulseBase = radius;
+    group.add(mesh);
+  }
+
+  _auraRings(group, color, count = 3, radius = 2.0, speed = 0.015) {
+    for (let i = 0; i < count; i++) {
+      const r = radius + i * 0.2;
+      const geo = new THREE.TorusGeometry(r, 0.025, 8, 80);
+      const mat = new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0.55 - i * 0.12,
+      });
+      const ring = new THREE.Mesh(geo, mat);
+      ring.rotation.set((i / count) * Math.PI, (i / count) * Math.PI * 0.5, 0);
+      ring.userData.spin = true;
+      ring.userData.spinSpeed = (i % 2 === 0 ? 1 : -1) * speed;
+      ring.userData.spinAxis = i % 2 === 0 ? 'z' : 'x';
+      group.add(ring);
+    }
+  }
+
+  _auraParticles(group, colors, count = 25, radiusMin = 1.8, radiusMax = 2.6) {
+    for (let i = 0; i < count; i++) {
+      const r = radiusMin + Math.random() * (radiusMax - radiusMin);
+      const angle = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      const size = 0.025 + Math.random() * 0.035;
+      const geo = new THREE.SphereGeometry(size, 6, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: col, transparent: true, opacity: 0.7 + Math.random() * 0.3,
+      });
+      const s = new THREE.Mesh(geo, mat);
+      s.position.setFromSphericalCoords(r, phi, angle);
+      s.userData.twinkle = true;
+      s.userData.twinkleOffset = Math.random() * Math.PI * 2;
+      group.add(s);
+    }
+  }
+
+  _auraFlames(group, colors, count = 20) {
+    const flameGroup = new THREE.Group();
+    flameGroup.userData.isFire = true;
+    for (let i = 0; i < count; i++) {
+      const r = 0.04 + Math.random() * 0.06;
+      const geo = new THREE.SphereGeometry(r, 6, 6);
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      const mat = new THREE.MeshBasicMaterial({
+        color: col, transparent: true, opacity: 0.7,
+      });
+      const fire = new THREE.Mesh(geo, mat);
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 1.2 + Math.random() * 0.3;
+      fire.position.set(
+        Math.cos(angle) * dist * 0.4,
+        1.0 + Math.random() * 1.5,
+        Math.sin(angle) * dist * 0.4,
+      );
+      fire.userData.speed  = 0.015 + Math.random() * 0.025;
+      fire.userData.startY = fire.position.y;
+      fire.userData.startX = fire.position.x;
+      fire.userData.startZ = fire.position.z;
+      fire.userData.phase  = Math.random() * Math.PI * 2;
+      flameGroup.add(fire);
+    }
+    group.add(flameGroup);
+  }
+
+  _auraArcs(group, color, count = 5) {
+    const arcGroup = new THREE.Group();
+    arcGroup.userData.isArcs = true;
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.TorusGeometry(1.8 + i * 0.08, 0.018, 6, 40);
+      const mat = new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0.6,
+      });
+      const arc = new THREE.Mesh(geo, mat);
+      arc.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      arc.userData.arcSpeed = (Math.random() - 0.5) * 0.06;
+      arcGroup.add(arc);
+    }
+    group.add(arcGroup);
+  }
+
+  _auraSnowflakes(group, count = 20) {
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.SphereGeometry(0.025, 6, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff, transparent: true, opacity: 0.8,
+      });
+      const s = new THREE.Mesh(geo, mat);
+      const a = Math.random() * Math.PI * 2;
+      const r = 1.6 + Math.random() * 0.5;
+      s.position.set(
+        Math.cos(a) * r,
+        (Math.random() - 0.5) * 2.5,
+        Math.sin(a) * r,
+      );
+      s.userData.snow = true;
+      s.userData.snowOffset = Math.random() * Math.PI * 2;
+      group.add(s);
+    }
+  }
+
+  // ── Визуалы каждой ауры ───────────────────────────────
+
+  auraBuilders = {
+    'aura_soft': function (group) {
+      this._auraGlow(group, 0xfff9c4, 2.0, 0.15);
+      this._auraParticles(group, [0xfffde7, 0xfff9c4, 0xfff59d], 15, 1.6, 2.2);
+    },
+
+    'aura_cool': function (group) {
+      this._auraGlow(group, 0xbbdefb, 2.0, 0.18);
+      this._auraParticles(group, [0x90caf9, 0x64b5f6, 0xbbdefb], 20, 1.7, 2.4);
+    },
+
+    'aura_rose': function (group) {
+      this._auraGlow(group, 0xf8bbd0, 2.0, 0.16);
+      this._auraParticles(group, [0xf48fb1, 0xf06292, 0xf8bbd0], 18, 1.7, 2.3);
+    },
+
+    'aura_bronze': function (group) {
+      this._auraRings(group, 0xcd7f32, 2, 1.8, 0.012);
+      this._auraGlow(group, 0xcd7f32, 2.0, 0.12);
+    },
+
+    'aura_silver': function (group) {
+      this._auraRings(group, 0xc0c0c0, 3, 1.9, 0.015);
+      this._auraGlow(group, 0xe0e0e0, 2.1, 0.15);
+      this._auraParticles(group, [0xffffff, 0xe0e0e0, 0xbdbdbd], 12, 1.8, 2.3);
+    },
+
+    'aura_gold': function (group) {
+      this._auraRings(group, 0xffd700, 4, 1.9, 0.018);
+      this._auraGlow(group, 0xffd700, 2.2, 0.2);
+      this._auraParticles(group, [0xffd700, 0xffeb3b, 0xffa000], 25, 1.8, 2.5);
+      const light = new THREE.PointLight(0xffd700, 1.5, 6);
+      group.add(light);
+    },
+
+    'aura_diamond': function (group) {
+      this._auraRings(group, 0xe3f2fd, 5, 2.0, 0.02);
+      this._auraGlow(group, 0xffffff, 2.3, 0.25);
+      this._auraParticles(group, [0xffffff, 0xe3f2fd, 0x80d8ff, 0xb3e5fc], 40, 1.9, 2.7);
+      const light = new THREE.PointLight(0xe3f2fd, 2.5, 8);
+      group.add(light);
+    },
+
+    'aura_angel': function (group) {
+      this._auraGlow(group, 0xfffde7, 2.4, 0.22);
+      this._auraParticles(group, [0xffffff, 0xfffde7, 0xfff9c4], 30, 1.8, 2.6);
+      // Ореол сверху
+      const haloGeo = new THREE.TorusGeometry(0.9, 0.04, 12, 60);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: 0xffeb3b, transparent: true, opacity: 0.7,
+      });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      halo.rotation.x = Math.PI / 2;
+      halo.position.y = 2.2;
+      halo.userData.slowSpin = true;
+      group.add(halo);
+      const light = new THREE.PointLight(0xfff9c4, 1.5, 6);
+      light.position.set(0, 2.2, 0);
+      group.add(light);
+    },
+
+    'aura_demon': function (group) {
+      this._auraGlow(group, 0xb71c1c, 2.2, 0.2);
+      this._auraFlames(group, [0xb71c1c, 0xd32f2f, 0x880e4f, 0x4a0000], 18);
+      this._auraParticles(group, [0xff1744, 0xd50000, 0x880e4f], 15, 1.8, 2.4);
+      const light = new THREE.PointLight(0xd32f2f, 2.0, 6);
+      group.add(light);
+    },
+
+    'aura_dragon': function (group) {
+      this._auraGlow(group, 0x6a1b9a, 2.3, 0.22);
+      this._auraFlames(group, [0xff6d00, 0xff9800, 0x6a1b9a, 0xaa00ff], 25);
+      this._auraRings(group, 0xaa00ff, 3, 2.0, 0.022);
+      this._auraParticles(group, [0xff6d00, 0xaa00ff, 0xff9800], 20, 2.0, 2.8);
+      const light = new THREE.PointLight(0xaa00ff, 2.5, 8);
+      group.add(light);
+    },
+
+    'aura_fire': function (group) {
+      this._auraGlow(group, 0xff5722, 2.1, 0.18);
+      this._auraFlames(group, [0xff9800, 0xffeb3b, 0xff5722, 0xff6d00], 22);
+      const light = new THREE.PointLight(0xff5722, 2.0, 6);
+      light.userData.flickerLight = true;
+      group.add(light);
+    },
+
+    'aura_ice': function (group) {
+      this._auraGlow(group, 0xb3e5fc, 2.1, 0.18);
+      this._auraSnowflakes(group, 25);
+      this._auraRings(group, 0x81d4fa, 2, 1.8, 0.01);
+      const light = new THREE.PointLight(0xb3e5fc, 1.5, 6);
+      group.add(light);
+    },
+
+    'aura_lightning': function (group) {
+      this._auraGlow(group, 0x00e5ff, 2.2, 0.2);
+      this._auraArcs(group, 0x00e5ff, 6);
+      this._auraParticles(group, [0x00e5ff, 0xffd740, 0xffffff], 20, 1.7, 2.5);
+      const light = new THREE.PointLight(0x00e5ff, 2.0, 7);
+      light.userData.flickerLight = true;
+      group.add(light);
+    },
+
+    'aura_cosmic': function (group) {
+      this._auraGlow(group, 0x7c4dff, 2.5, 0.25);
+      this._auraRings(group, 0xe040fb, 4, 2.0, 0.012);
+      this._auraParticles(group,
+        [0xffffff, 0xe040fb, 0x00bcd4, 0xffeb3b, 0x7c4dff],
+        50, 2.0, 3.0,
+      );
+      const light = new THREE.PointLight(0x7c4dff, 2.5, 10);
+      group.add(light);
+    },
+  };
+
+  // ═══════════════════════════════════════════════════════════
   //                      АНИМАЦИЯ
   // ═══════════════════════════════════════════════════════════
 
@@ -1597,6 +1850,12 @@ export class Mango3D {
       this.mangoGroup.traverse(obj => {
         if (!obj.userData) return;
         if (obj.userData.isStaticEmoji && !obj.userData.isGlowLayer) return;
+        if (ud.auraPulse) {
+          const base = ud.auraPulseBase || 2.2;
+          const sc = base + Math.sin(t * 1.5) * base * 0.08;
+          obj.scale.setScalar(sc / base);
+          obj.material.opacity = 0.15 + Math.sin(t * 1.5) * 0.06;
+        }
         const ud = obj.userData;
 
         // ═══ Пульсация свечения для эмодзи-скинов ═══
