@@ -1824,3 +1824,397 @@ body::before {
 
   .ad-banner { display: none; } /* Скрываем рекламу в ландшафте */
 }
+
+/* ===== 3D MANGO CANVAS ===== */
+.mango-container canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mango-button {
+  background: transparent !important;
+  z-index: 3;
+}
+
+/* ===== АКСЕССУАРЫ ===== */
+.accessories-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.accessory-item {
+  position: absolute;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  animation: accessoryFloat 3s ease-in-out infinite;
+}
+
+@keyframes accessoryFloat {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  50% { transform: translate(-50%, -50%) rotate(2deg); }
+}
+
+/* АУРЫ */
+.aura-effect {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: auraRotate 4s linear infinite;
+  font-size: 0 !important;
+}
+
+.aura-fire {
+  background: radial-gradient(circle, rgba(255,87,34,0.4) 0%, rgba(255,152,0,0.2) 40%, transparent 70%);
+  box-shadow: 0 0 60px rgba(255,87,34,0.6);
+}
+
+.aura-ice {
+  background: radial-gradient(circle, rgba(33,150,243,0.4) 0%, rgba(129,212,250,0.2) 40%, transparent 70%);
+  box-shadow: 0 0 60px rgba(33,150,243,0.6);
+}
+
+.aura-lightning {
+  background: radial-gradient(circle, rgba(255,235,59,0.4) 0%, rgba(0,188,212,0.2) 40%, transparent 70%);
+  box-shadow: 0 0 60px rgba(255,235,59,0.6);
+  animation: auraRotate 2s linear infinite, auraFlicker 0.5s ease-in-out infinite;
+}
+
+.aura-cosmic {
+  background: radial-gradient(circle, rgba(224,64,251,0.4) 0%, rgba(124,77,255,0.3) 30%, rgba(0,188,212,0.2) 50%, transparent 70%);
+  box-shadow: 0 0 80px rgba(224,64,251,0.6);
+  animation: auraRotate 5s linear infinite, auraPulse 2s ease-in-out infinite;
+}
+
+@keyframes auraRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes auraFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes auraPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* ===== ПИТОМЦЫ ===== */
+.pets-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.pet-item {
+  position: absolute;
+  font-size: 40px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+  transition: left 0.5s linear, top 0.5s linear;
+  animation: petBob 2s ease-in-out infinite;
+}
+
+@keyframes petBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* ===== ФОНЫ ===== */
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.background-overlay.bg-active {
+  opacity: 1;
+}
+
+/* Закат */
+.bg-bg_sunset {
+  background: linear-gradient(180deg,
+    #ff6b35 0%,
+    #f7931e 30%,
+    #fdc830 60%,
+    #f37335 100%);
+}
+.bg-bg_sunset .sun {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #fff9c4 0%, #ffeb3b 50%, #ff9800 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 80px #ffeb3b;
+  animation: sunPulse 4s ease-in-out infinite;
+}
+@keyframes sunPulse {
+  0%, 100% { box-shadow: 0 0 80px #ffeb3b; }
+  50% { box-shadow: 0 0 120px #ffeb3b, 0 0 200px #ff9800; }
+}
+
+/* Океан */
+.bg-bg_ocean {
+  background: linear-gradient(180deg,
+    #4fc3f7 0%,
+    #29b6f6 50%,
+    #0288d1 100%);
+}
+.bg-bg_ocean .wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  height: 30px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  border-radius: 50%;
+  animation: waveMove 4s linear infinite;
+}
+@keyframes waveMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Лес */
+.bg-bg_forest {
+  background: linear-gradient(180deg,
+    #66bb6a 0%,
+    #43a047 50%,
+    #1b5e20 100%);
+}
+.bg-bg_forest .forest-element {
+  position: absolute;
+  animation: forestSway 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+@keyframes forestSway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* Космос / Измерение / Аврора */
+.bg-bg_space,
+.bg-bg_dimension {
+  background: radial-gradient(ellipse at center,
+    #1a237e 0%,
+    #000051 50%,
+    #000000 100%);
+}
+.bg-bg_aurora {
+  background: linear-gradient(180deg,
+    #001f3f 0%,
+    #003366 30%,
+    #0a4d68 70%,
+    #003366 100%);
+}
+.bg-bg_aurora::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(180deg,
+    rgba(76,175,80,0.4) 0%,
+    rgba(0,188,212,0.3) 30%,
+    rgba(156,39,176,0.2) 60%,
+    transparent 100%);
+  animation: auroraMove 8s ease-in-out infinite;
+  filter: blur(20px);
+}
+@keyframes auroraMove {
+  0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.7; }
+  50% { transform: translateY(-10px) scaleY(1.1); opacity: 1; }
+}
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: starTwinkle 2s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* Неоновый город */
+.bg-bg_neon_city {
+  background: linear-gradient(180deg,
+    #0a0a2e 0%,
+    #1a1a4e 50%,
+    #2d1b69 100%);
+}
+.bg-bg_neon_city .neon-building {
+  position: absolute;
+  bottom: 0;
+  width: 8%;
+  border-top: 2px solid;
+  border-image: linear-gradient(90deg, #e040fb, #00bcd4) 1;
+  opacity: 0.6;
+}
+
+/* Вулкан */
+.bg-bg_volcano {
+  background: radial-gradient(ellipse at bottom,
+    #ff3d00 0%,
+    #d84315 30%,
+    #4e342e 60%,
+    #1a0000 100%);
+}
+.bg-bg_volcano .lava-particle {
+  position: absolute;
+  bottom: 0;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #ffeb3b, #ff5722);
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ff5722;
+  animation: lavaRise 3s ease-out infinite;
+}
+@keyframes lavaRise {
+  0% { bottom: 0; opacity: 1; transform: scale(1); }
+  100% { bottom: 100%; opacity: 0; transform: scale(0.3); }
+}
+
+/* Небеса */
+.bg-bg_heaven {
+  background: linear-gradient(180deg,
+    #fff9c4 0%,
+    #ffecb3 40%,
+    #fff59d 70%,
+    #fff9c4 100%);
+}
+.bg-bg_heaven .cloud {
+  position: absolute;
+  animation: cloudFloat 15s linear infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  opacity: 0.8;
+}
+@keyframes cloudFloat {
+  from { transform: translateX(-100px); }
+  to { transform: translateX(calc(100vw + 100px)); }
+}
+
+/* ===== СЛЕД ЗА КУРСОРОМ ===== */
+.trail-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  overflow: hidden;
+}
+
+.trail-particle {
+  position: fixed;
+  font-size: 24px;
+  pointer-events: none;
+  animation: trailFade 1s ease-out forwards;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+  transform: translate(-50%, -50%);
+}
+
+@keyframes trailFade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) translateY(-30px);
+  }
+}
+
+/* ===== ЭФФЕКТЫ КЛИКА ===== */
+.click-effect {
+  position: absolute;
+  pointer-events: none;
+  font-size: 60px;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+}
+
+.effect-pop {
+  animation: effectPop 0.6s ease-out forwards;
+}
+@keyframes effectPop {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+.effect-coin {
+  font-size: 28px;
+  animation: effectCoin 1.2s ease-out forwards;
+}
+@keyframes effectCoin {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%)
+              rotate(var(--angle))
+              translateX(100px)
+              scale(0.3);
+    opacity: 0;
+  }
+}
+
+.effect-explosion {
+  font-size: 80px;
+  animation: effectExplosion 0.8s ease-out forwards;
+}
+@keyframes effectExplosion {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+.effect-portal {
+  animation: effectPortal 1.2s ease-out forwards;
+}
+@keyframes effectPortal {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.5) rotate(360deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2) rotate(720deg); opacity: 0; }
+}
+
+.effect-nuke {
+  font-size: 100px;
+  animation: effectNuke 1.5s ease-out forwards;
+}
+@keyframes effectNuke {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; filter: brightness(2); }
+  30% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: brightness(3); }
+  100% { transform: translate(-50%, -50%) scale(4); opacity: 0; filter: brightness(1); }
+}
+
+/* Эффект на фоне делает игровую область видимой */
+.game-area {
+  position: relative;
+  z-index: 1;
+}
+
+.stats-bar {
+  position: relative;
+  z-index: 2;
+}
