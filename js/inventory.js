@@ -1,5 +1,4 @@
-// js/inventory.js
-import { getItemById, RARITIES } from './items-database.js';
+import { getItemById, RARITIES, getItemMaxCount } from './items-database.js';
 
 export class InventoryManager {
   constructor(app) {
@@ -22,7 +21,6 @@ export class InventoryManager {
   getFilteredItems() {
     const inv = this.app.userData?.inventory || [];
 
-    // Группируем по id и считаем количество
     const grouped = {};
     inv.forEach(invItem => {
       if (!grouped[invItem.id]) {
@@ -39,8 +37,10 @@ export class InventoryManager {
       if (this.currentTab === 'all') return true;
       if (this.currentTab === 'skins') return item.type === 'skin';
       if (this.currentTab === 'upgrades') return item.type === 'upgrade';
-      if (this.currentTab === 'accessories') return ['accessory', 'pet'].includes(item.type);
-      if (this.currentTab === 'other') return ['background', 'trail', 'effect', 'music', 'frame', 'title'].includes(item.type);
+      if (this.currentTab === 'auras') return item.type === 'aura';
+      if (this.currentTab === 'other') return [
+        'background', 'trail', 'effect', 'music', 'frame', 'title'
+      ].includes(item.type);
       return false;
     });
   }
@@ -64,6 +64,7 @@ export class InventoryManager {
     items.forEach(item => {
       const rarity = RARITIES[item.rarity];
       const equipped = this.app.shopManager ? this.app.shopManager.isEquipped(item) : false;
+      const showQty = item.qty > 1;
 
       html += `
         <div class="item-card rarity-${item.rarity} ${equipped ? 'equipped' : ''}"
@@ -71,10 +72,10 @@ export class InventoryManager {
           <div class="item-card-rarity"></div>
           ${item.render === '3d' ? '<span class="badge-3d-indicator">3D</span>' : ''}
           ${equipped ? '<span class="item-card-badge badge-equipped">⚡ Надето</span>' : ''}
-          ${item.qty > 1 ? `<span class="item-card-qty">x${item.qty}</span>` : ''}
+          ${showQty ? `<span class="item-card-qty">x${item.qty}</span>` : ''}
           <div class="item-card-emoji">${item.emoji}</div>
           <div class="item-card-name">${item.name}</div>
-          <div class="item-card-rarity-text">${rarity.name}</div>
+          <div class="item-card-rarity-text" style="color:${rarity.color}">${rarity.name}</div>
           <div class="item-card-desc">${item.description}</div>
         </div>`;
     });
