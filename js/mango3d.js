@@ -385,6 +385,75 @@ export class Mango3D {
     return group;
   }
 
+    /**
+   * Строит эмодзи-скин: спрайт с текстурой эмодзи через Canvas
+   * НЕ вращается и НЕ покачивается
+   */
+  _buildEmojiSkin(emoji, tintColor = 0xffffff, scale = 1.0) {
+    // Помечаем группу как "статичную" — animate() не будет её крутить
+    this.mangoGroup.userData.isEmojiSkin = true;
+
+    // Рисуем эмодзи на canvas
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Фоновое свечение
+    const grad = ctx.createRadialGradient(
+      size / 2, size / 2, 50,
+      size / 2, size / 2, size / 2,
+    );
+    const r = (tintColor >> 16) & 0xff;
+    const g = (tintColor >> 8) & 0xff;
+    const b = tintColor & 0xff;
+    grad.addColorStop(0,    `rgba(${r},${g},${b},0.5)`);
+    grad.addColorStop(0.6,  `rgba(${r},${g},${b},0.1)`);
+    grad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    // Сам эмодзи
+    ctx.font = `${size * 0.75}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Тень
+    ctx.shadowColor = `rgba(${r},${g},${b},0.7)`;
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 8;
+
+    ctx.fillText(emoji, size / 2, size / 2 + 10);
+
+    // Цветовая тонировка (если не оранжевый по умолчанию)
+    if (tintColor !== 0xff9800) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = `rgba(${r},${g},${b},0.3)`;
+      ctx.fillRect(0, 0, size, size);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Создаём текстуру и спрайт
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    const spriteMat = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+    });
+    const sprite = new THREE.Sprite(spriteMat);
+
+    // Размер спрайта в сцене (~3 единицы)
+    const baseSize = 3.0 * scale;
+    sprite.scale.set(baseSize, baseSize, 1);
+
+    // Помечаем спрайт чтобы animate() его не трогал
+    sprite.userData.isStaticEmoji = true;
+
+    this.mangoGroup.add(sprite);
+  }
+
   // ───────────────────────── ОЧИСТКА ─────────────────────────
 
   clearMango() {
@@ -438,214 +507,57 @@ export class Mango3D {
 
   skinBuilders = {
 
+    // ═══════════════════════════════════════════════
+    //         COMMON и UNCOMMON — ЭМОДЗИ
+    //   Без вращения, без анимации сцены
+    // ═══════════════════════════════════════════════
+
     // ── COMMON ─────────────────────────────────────────────
 
     'default': function () {
-      this.skinBuilders['mango_default'].call(this);
+      this._buildEmojiSkin('🥭', 0xff9800);
     },
 
     'mango_default': function () {
-      this._setAccentLight(0xff9800, 2.0);
-
-      // Основное тело — сочный оранжевый
-      const body = this.createMangoBody(0xff9800, {
-        shininess: 130,
-        specular: 0xffe0b2,
-      });
-      this.mangoGroup.add(body);
-
-      // Зеленовато-красный градиент у основания (имитация через второй слой)
-      const blush = this.createMangoBody(0xe53935, {
-        transparent: true, opacity: 0.18, shininess: 40,
-      });
-      blush.scale.set(1.001, 0.5, 1.001);
-      blush.position.y = -0.55;
-      this.mangoGroup.add(blush);
-
-      this.mangoGroup.add(this.createHighlight(0.28));
-      this.mangoGroup.add(this.createStem());
-      this.mangoGroup.add(this.createLeaf(0x4caf50));
-
-      // Второй листик
-      const leaf2 = this.createLeaf(0x388e3c);
-      leaf2.position.set(-0.14, 1.72, 0.05);
-      leaf2.rotation.set(0.05, -0.65, 0.18);
-      this.mangoGroup.add(leaf2);
+      this._buildEmojiSkin('🥭', 0xff9800);
     },
 
     'mango_green': function () {
-      this._setAccentLight(0x7cb342, 2.0);
-      const body = this.createMangoBody(0x8bc34a, { shininess: 110, specular: 0xdcedc8 });
-      this.mangoGroup.add(body);
-
-      // Жёлтый переход у хвостика
-      const tip = this.createMangoBody(0xfdd835, { transparent: true, opacity: 0.22 });
-      tip.scale.set(1.001, 0.3, 1.001);
-      tip.position.y = 0.8;
-      this.mangoGroup.add(tip);
-
-      this.mangoGroup.add(this.createHighlight(0.2));
-      this.mangoGroup.add(this.createStem(0x33691e));
-      this.mangoGroup.add(this.createLeaf(0x1b5e20));
-      const l2 = this.createLeaf(0x33691e);
-      l2.position.set(-0.13, 1.72, 0.04);
-      l2.rotation.set(0, -0.7, 0.15);
-      this.mangoGroup.add(l2);
+      this._buildEmojiSkin('🥭', 0x8bc34a);
     },
 
     'mango_small': function () {
-      this._setAccentLight(0xffb74d, 1.8);
-      const body = this.createMangoBody(0xffb74d, { shininess: 120 });
-      body.scale.setScalar(0.72);
-      this.mangoGroup.add(body);
-      this.mangoGroup.add(this.createHighlight(0.22));
-      const stem = this.createStem();
-      stem.scale.setScalar(0.72);
-      stem.position.y = -0.35;
-      this.mangoGroup.add(stem);
-      const leaf = this.createLeaf(0x4caf50, 0.72);
-      leaf.position.y = 1.15;
-      this.mangoGroup.add(leaf);
+      this._buildEmojiSkin('🥭', 0xffb74d, 0.7);
     },
 
     'mango_round': function () {
-      this._setAccentLight(0xffa726, 2.0);
-      // Идеально круглый — обычная сфера
-      const geo = new THREE.SphereGeometry(1.28, 96, 96);
-      const mat = new THREE.MeshPhongMaterial({
-        color: 0xffa726, shininess: 140, specular: 0xffe082,
-      });
-      const body = new THREE.Mesh(geo, mat);
-      body.castShadow = true;
-      body.receiveShadow = true;
-      this.mangoGroup.add(body);
-      this.mangoGroup.add(this.createHighlight(0.3));
-      this.mangoGroup.add(this.createStem());
-      this.mangoGroup.add(this.createLeaf());
+      this._buildEmojiSkin('🥭', 0xffa726);
     },
 
     'mango_spotted': function () {
-      this._setAccentLight(0xff7043, 2.0);
-      this.mangoGroup.add(this.createMangoBody(0xff8f00, { shininess: 80 }));
-      // Пятна — выпуклые, как настоящие
-      for (let i = 0; i < 14; i++) {
-        const geo = new THREE.SphereGeometry(0.072, 14, 14);
-        const mat = new THREE.MeshPhongMaterial({
-          color: 0x4e342e, shininess: 50,
-        });
-        const spot = new THREE.Mesh(geo, mat);
-        spot.castShadow = true;
-        const angle = (i / 14) * Math.PI * 2 + (i % 3) * 0.4;
-        const phi = Math.PI * 0.18 + (i % 4) * (Math.PI * 0.65 / 4);
-        spot.position.setFromSphericalCoords(1.18, phi, angle);
-        spot.position.y *= 1.35;
-        this.mangoGroup.add(spot);
-      }
-      this.mangoGroup.add(this.createStem());
-      this.mangoGroup.add(this.createLeaf());
+      this._buildEmojiSkin('🥭', 0xff8f00);
     },
 
     // ── UNCOMMON ────────────────────────────────────────────
 
     'mango_golden_light': function () {
-      this._setAccentLight(0xffd740, 3.0);
-      // PBR для металлика — золото должно блестеть
-      this.mangoGroup.add(this.createMangoBody(0xffd54f, {
-        usePBR: true, roughness: 0.15, metalness: 0.7,
-      }));
-      this.mangoGroup.add(this.createHighlight(0.38));
-      this.mangoGroup.add(this.createStem(0x8d6e63));
-      this.mangoGroup.add(this.createLeaf(0x558b2f));
-
-      // Золотое свечение
-      const glow = new THREE.PointLight(0xffd700, 1.5, 5);
-      this.mangoGroup.add(glow);
+      this._buildEmojiSkin('🥭', 0xffd54f);
     },
 
     'mango_red': function () {
-      this._setAccentLight(0xe53935, 2.5);
-      this.mangoGroup.add(this.createMangoBody(0xe53935, {
-        shininess: 150,
-        specular: 0xff8a80,
-        emissive: 0xb71c1c,
-        emissiveIntensity: 0.12,
-      }));
-
-      // Тёмные прожилки
-      for (let i = 0; i < 5; i++) {
-        const geo = new THREE.TorusGeometry(0.9 - i * 0.04, 0.018, 6, 24, Math.PI * 0.3);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x7f0000 });
-        const vein = new THREE.Mesh(geo, mat);
-        vein.rotation.z = (i / 5) * Math.PI * 2;
-        vein.rotation.x = Math.PI / 2 + i * 0.3;
-        this.mangoGroup.add(vein);
-      }
-
-      this.mangoGroup.add(this.createHighlight(0.22));
-      this.mangoGroup.add(this.createStem(0x3e2723));
-      this.mangoGroup.add(this.createLeaf(0x1b5e20));
+      this._buildEmojiSkin('🥭', 0xe53935);
     },
 
     'mango_striped': function () {
-      this._setAccentLight(0xff7043, 2.0);
-      this.mangoGroup.add(this.createMangoBody(0xff8f00, { shininess: 100 }));
-      for (let i = 0; i < 5; i++) {
-        const geo = new THREE.TorusGeometry(
-          1.14 - i * 0.03, 0.048, 12, 60,
-        );
-        const mat = new THREE.MeshPhongMaterial({
-          color: 0x4e342e, shininess: 60,
-        });
-        const stripe = new THREE.Mesh(geo, mat);
-        stripe.rotation.x = Math.PI / 2;
-        stripe.position.y = -0.9 + i * 0.48;
-        stripe.scale.y = 0.7;
-        stripe.castShadow = true;
-        this.mangoGroup.add(stripe);
-      }
-      this.mangoGroup.add(this.createStem());
-      this.mangoGroup.add(this.createLeaf());
+      this._buildEmojiSkin('🥭', 0xff8f00);
     },
 
     'mango_neon_green': function () {
-      this._setAccentLight(0x76ff03, 4.0);
-      this.mangoGroup.add(this.createMangoBody(0x76ff03, {
-        shininess: 200,
-        specular: 0xccff90,
-        emissive: 0x33691e,
-        emissiveIntensity: 0.8,
-      }));
-
-      // Пульсирующие концентрические ореолы
-      for (let i = 0; i < 3; i++) {
-        const halo = this._makeHalo(1.45 + i * 0.15, 0.025, 0x76ff03, 0.5 - i * 0.12);
-        halo.userData.pulseHalo = true;
-        halo.userData.pulseOffset = (i / 3) * Math.PI;
-        this.mangoGroup.add(halo);
-      }
-
-      const glow = new THREE.PointLight(0x76ff03, 3.0, 8);
-      this.mangoGroup.add(glow);
-      this.mangoGroup.add(this.createStem(0x33691e));
-      this.mangoGroup.add(this.createLeaf(0xaeea00));
+      this._buildEmojiSkin('🥭', 0x76ff03);
     },
 
     'mango_tropical': function () {
-      this._setAccentLight(0xff6f00, 2.2);
-      this.mangoGroup.add(this.createMangoBody(0xff6f00, { shininess: 110 }));
-      this.mangoGroup.add(this.createHighlight(0.25));
-      this.mangoGroup.add(this.createStem(0x388e3c));
-      // 4 листа — как тропическая пальма
-      for (let i = 0; i < 4; i++) {
-        const leaf = this.createLeaf(0x1b5e20, 0.9);
-        leaf.rotation.y = (i / 4) * Math.PI * 2;
-        leaf.position.set(
-          Math.cos((i / 4) * Math.PI * 2) * 0.08,
-          1.62,
-          Math.sin((i / 4) * Math.PI * 2) * 0.08,
-        );
-        this.mangoGroup.add(leaf);
-      }
+      this._buildEmojiSkin('🥭', 0xff6f00);
     },
 
     // ── RARE ────────────────────────────────────────────────
@@ -1703,12 +1615,18 @@ export class Mango3D {
     const t = this.clock;
 
     if (this.mangoGroup) {
-      this.mangoGroup.rotation.y += 0.007;
-      this.mangoGroup.rotation.x  = Math.sin(t * 0.45) * 0.04;
-      this.mangoGroup.position.y  = Math.sin(t * 0.75) * 0.08;
+      // FIX: эмодзи-скины (common/uncommon) НЕ анимируются
+      if (!this.mangoGroup.userData.isEmojiSkin) {
+        // Базовое вращение и покачивание — только для 3D моделей
+        this.mangoGroup.rotation.y += 0.007;
+        this.mangoGroup.rotation.x  = Math.sin(t * 0.45) * 0.04;
+        this.mangoGroup.position.y  = Math.sin(t * 0.75) * 0.08;
+      }
 
       this.mangoGroup.traverse(obj => {
         if (!obj.userData) return;
+        // Пропускаем статичные эмодзи
+        if (obj.userData.isStaticEmoji) return;
         const ud = obj.userData;
 
         if (ud.spin) {
@@ -1910,17 +1828,25 @@ export class Mango3D {
   pulse() {
     if (!this.mangoGroup) return;
     const start = performance.now();
+    const isEmoji = this.mangoGroup.userData.isEmojiSkin;
+
     const animate = () => {
       const elapsed = performance.now() - start;
       const p = Math.min(elapsed / 180, 1);
-      // Squash & Stretch
       const squeeze = Math.sin(p * Math.PI);
       if (this.mangoGroup) {
-        this.mangoGroup.scale.set(
-          1 + squeeze * 0.16,
-          1 - squeeze * 0.16,
-          1 + squeeze * 0.16,
-        );
+        if (isEmoji) {
+          // Простой пульс для эмодзи
+          const s = 1 + squeeze * 0.15;
+          this.mangoGroup.scale.set(s, s, s);
+        } else {
+          // Squash & stretch для 3D
+          this.mangoGroup.scale.set(
+            1 + squeeze * 0.16,
+            1 - squeeze * 0.16,
+            1 + squeeze * 0.16,
+          );
+        }
       }
       if (p < 1) requestAnimationFrame(animate);
       else if (this.mangoGroup) this.mangoGroup.scale.set(1, 1, 1);
