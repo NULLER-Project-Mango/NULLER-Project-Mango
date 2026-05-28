@@ -23,8 +23,7 @@ export class ShopManager {
     switch (this.currentTab) {
       case 'skins':       return MANGO_SKINS.filter(s => s.price > 0);
       case 'upgrades':    return UPGRADES;
-      case 'accessories': return COLLECTIBLES.filter(c => c.type === 'accessory');
-      case 'pets':        return COLLECTIBLES.filter(c => c.type === 'pet');
+      case 'auras':       return COLLECTIBLES.filter(c => c.type === 'aura');
       case 'backgrounds': return COLLECTIBLES.filter(c => c.type === 'background');
       case 'effects':     return COLLECTIBLES.filter(c => ['trail', 'effect'].includes(c.type));
       case 'other':       return COLLECTIBLES.filter(c => ['music', 'frame', 'title'].includes(c.type));
@@ -77,15 +76,11 @@ export class ShopManager {
       if (owned) {
         const badge = document.createElement('span');
         badge.className = 'item-card-badge badge-owned';
-
-        if (item.type === 'upgrade') {
-          badge.textContent = `✓ x${ownedCount}`;
-        } else if (maxCount === Infinity) {
+        if (item.type === 'upgrade' || maxCount === Infinity) {
           badge.textContent = `✓ x${ownedCount}`;
         } else {
           badge.textContent = '✓ Куплено';
         }
-
         card.appendChild(badge);
       }
 
@@ -118,14 +113,12 @@ export class ShopManager {
 
       const price = document.createElement('div');
       price.className = 'item-card-price';
-
       if (reachedMaxCount && maxCount !== Infinity) {
         price.style.color = 'var(--success)';
         price.textContent = '✓ В инвентаре';
       } else {
         price.textContent = `🥭 ${this.app.formatNumber(item.price)}`;
       }
-
       card.appendChild(price);
 
       card.addEventListener('click', () => this.showItemDetail(item.id));
@@ -143,7 +136,7 @@ export class ShopManager {
     if (item.type === 'background') return data.equippedBackground === item.id;
     if (item.type === 'trail')      return data.equippedTrail === item.id;
     if (item.type === 'effect')     return data.equippedEffect === item.id;
-    if (item.type === 'accessory' || item.type === 'pet') {
+    if (item.type === 'aura') {
       return (data.equippedAccessories || []).includes(item.id);
     }
     return false;
@@ -159,7 +152,6 @@ export class ShopManager {
     const equipped = this.isEquipped(item);
     const rarity = RARITIES[item.rarity];
     const canAfford = (this.app.userData?.score || 0) >= item.price;
-
     const maxCount = getItemMaxCount(item);
     const reachedMaxCount = ownedCount >= maxCount;
 
@@ -212,7 +204,6 @@ export class ShopManager {
     if (owned) {
       const countEl = document.createElement('div');
       countEl.style.cssText = 'margin-top:10px;font-size:13px;color:var(--text-secondary);';
-
       if (maxCount === Infinity) {
         countEl.textContent = `В инвентаре: ${ownedCount} шт.`;
       } else if (item.type === 'upgrade') {
@@ -222,7 +213,6 @@ export class ShopManager {
       } else {
         countEl.textContent = `В инвентаре: ${ownedCount}`;
       }
-
       body.appendChild(countEl);
     }
 
@@ -245,7 +235,7 @@ export class ShopManager {
     }
 
     if (owned && item.type !== 'upgrade' &&
-        ['skin', 'background', 'trail', 'effect', 'accessory', 'pet'].includes(item.type)) {
+        ['skin', 'background', 'trail', 'effect', 'aura'].includes(item.type)) {
       const equipBtn = document.createElement('button');
       equipBtn.className = `btn ${equipped ? 'btn-danger' : 'btn-success'}`;
       equipBtn.textContent = equipped ? 'Снять' : 'Надеть';
@@ -265,39 +255,17 @@ export class ShopManager {
     }
 
     const item = getItemById(itemId);
-    if (!item) {
-      this.app.notify('Предмет не найден!', 'error');
-      return;
-    }
-
-    if (typeof item.price !== 'number' || item.price < 0) {
-      this.app.notify('Некорректная цена!', 'error');
-      return;
-    }
+    if (!item) { this.app.notify('Предмет не найден!', 'error'); return; }
+    if (typeof item.price !== 'number' || item.price < 0) { this.app.notify('Некорректная цена!', 'error'); return; }
 
     const data = this.app.userData;
     if (!data) return;
+    if (data.score < item.price) { this.app.notify('Недостаточно очков!', 'error'); return; }
 
-    if (data.score < item.price) {
-      this.app.notify('Недостаточно очков!', 'error');
-      return;
-    }
-
-    const ownedCount = data.inventory
-      .filter(i => i.id === itemId)
-      .reduce((sum, i) => sum + (i.qty || 1), 0);
-
+    const ownedCount = data.inventory.filter(i => i.id === itemId).reduce((sum, i) => sum + (i.qty || 1), 0);
     const maxCount = getItemMaxCount(item);
-
-    if (ownedCount >= maxCount) {
-      this.app.notify('Достигнут максимум покупок!', 'warning');
-      return;
-    }
-
-    if (data.inventory.length >= 500) {
-      this.app.notify('Инвентарь переполнен! Продайте лишнее.', 'error');
-      return;
-    }
+    if (ownedCount >= maxCount) { this.app.notify('Достигнут максимум покупок!', 'warning'); return; }
+    if (data.inventory.length >= 500) { this.app.notify('Инвентарь переполнен!', 'error'); return; }
 
     this.isPurchasing = true;
     if (buttonEl) buttonEl.disabled = true;
@@ -305,48 +273,37 @@ export class ShopManager {
     const oldScore = data.score;
     const oldInventory = [...data.inventory];
     const oldStats = {
-      clickPower:     data.clickPower,
-      autoClickRate:  data.autoClickRate,
-      maxEnergy:      data.maxEnergy,
-      energyRegen:    data.energyRegen,
-      multiplier:     data.multiplier,
-      critChance:     data.critChance,
+      clickPower: data.clickPower, autoClickRate: data.autoClickRate,
+      maxEnergy: data.maxEnergy, energyRegen: data.energyRegen,
+      multiplier: data.multiplier, critChance: data.critChance,
       critMultiplier: data.critMultiplier
     };
 
     data.score -= item.price;
     data.inventory.push({ id: itemId, qty: 1, acquiredAt: Date.now() });
 
-    if (item.type === 'upgrade') {
-      this.applyUpgrade(item);
-    }
+    if (item.type === 'upgrade') this.applyUpgrade(item);
 
     try {
       await this.app.saveUserData({
-        score:          data.score,
-        inventory:      data.inventory,
-        clickPower:     data.clickPower,
-        autoClickRate:  data.autoClickRate,
-        maxEnergy:      data.maxEnergy,
-        energyRegen:    data.energyRegen,
-        multiplier:     data.multiplier,
-        critChance:     data.critChance,
+        score: data.score, inventory: data.inventory,
+        clickPower: data.clickPower, autoClickRate: data.autoClickRate,
+        maxEnergy: data.maxEnergy, energyRegen: data.energyRegen,
+        multiplier: data.multiplier, critChance: data.critChance,
         critMultiplier: data.critMultiplier
       });
 
-      if (item.type === 'music' && this.app.musicManager) {
-        this.app.musicManager.refreshTrack();
-      }
+      if (item.type === 'music' && this.app.musicManager) this.app.musicManager.refreshTrack();
 
       this.app.notify(`Куплено: ${item.emoji} ${item.name}!`, 'success');
       this.app.closeModal();
       this.render();
     } catch (error) {
       console.error('Buy error:', error);
-      data.score     = oldScore;
+      data.score = oldScore;
       data.inventory = oldInventory;
       Object.assign(data, oldStats);
-      this.app.notify('Ошибка покупки! Проверьте соединение.', 'error');
+      this.app.notify('Ошибка покупки!', 'error');
       this.app.updateUI();
     } finally {
       this.isPurchasing = false;
@@ -356,45 +313,23 @@ export class ShopManager {
 
   applyUpgrade(item) {
     const data = this.app.userData;
-
     const safeValue = Math.max(0, Math.min(10000, item.value));
-
     switch (item.effect) {
-      case 'clickPower':
-        data.clickPower = Math.min(100000, (data.clickPower || 1) + safeValue);
-        break;
-      case 'autoClick':
-        data.autoClickRate = Math.min(100000, (data.autoClickRate || 0) + safeValue);
-        break;
-      case 'maxEnergy':
-        data.maxEnergy = Math.min(100000, (data.maxEnergy || 100) + safeValue);
-        break;
-      case 'energyRegen':
-        data.energyRegen = Math.min(1000, (data.energyRegen || 2) + safeValue);
-        break;
-      case 'multiplier':
-        if (safeValue > 0) {
-          data.multiplier = Math.min(10000, (data.multiplier || 1) * safeValue);
-        }
-        break;
-      case 'critChance':
-        data.critChance = Math.min(0.95, (data.critChance || 0.05) + safeValue);
-        break;
-      case 'critMulti':
-        data.critMultiplier = Math.min(20, (data.critMultiplier || 2) + safeValue);
-        break;
+      case 'clickPower':   data.clickPower    = Math.min(100000, (data.clickPower || 1) + safeValue); break;
+      case 'autoClick':    data.autoClickRate  = Math.min(100000, (data.autoClickRate || 0) + safeValue); break;
+      case 'maxEnergy':    data.maxEnergy      = Math.min(100000, (data.maxEnergy || 100) + safeValue); break;
+      case 'energyRegen':  data.energyRegen    = Math.min(1000,   (data.energyRegen || 2) + safeValue); break;
+      case 'multiplier':   if (safeValue > 0) data.multiplier = Math.min(10000, (data.multiplier || 1) * safeValue); break;
+      case 'critChance':   data.critChance     = Math.min(0.95, (data.critChance || 0.05) + safeValue); break;
+      case 'critMulti':    data.critMultiplier  = Math.min(20,   (data.critMultiplier || 2) + safeValue); break;
     }
   }
 
   async toggleEquip(itemId) {
     const item = getItemById(itemId);
-    if (!item) {
-      this.app.notify('Предмет не найден!', 'error');
-      return;
-    }
+    if (!item) { this.app.notify('Предмет не найден!', 'error'); return; }
 
     const data = this.app.userData;
-
     if (!data.inventory.some(i => i.id === itemId)) {
       this.app.notify('Предмет не в инвентаре!', 'error');
       return;
@@ -403,12 +338,12 @@ export class ShopManager {
     let isNowEquipped = false;
 
     const oldData = {
-      equippedSkin:         data.equippedSkin,
-      equippedBackground:   data.equippedBackground,
-      equippedTrail:        data.equippedTrail,
-      equippedEffect:       data.equippedEffect,
-      equippedAccessories:  [...(data.equippedAccessories || [])],
-      clickPower:           data.clickPower
+      equippedSkin: data.equippedSkin,
+      equippedBackground: data.equippedBackground,
+      equippedTrail: data.equippedTrail,
+      equippedEffect: data.equippedEffect,
+      equippedAccessories: [...(data.equippedAccessories || [])],
+      clickPower: data.clickPower
     };
 
     if (item.type === 'skin') {
@@ -431,14 +366,14 @@ export class ShopManager {
     } else if (item.type === 'effect') {
       data.equippedEffect = data.equippedEffect === itemId ? null : itemId;
       isNowEquipped = data.equippedEffect === itemId;
-    } else if (item.type === 'accessory' || item.type === 'pet') {
+    } else if (item.type === 'aura') {
       const accs = data.equippedAccessories || [];
       const idx = accs.indexOf(itemId);
       if (idx >= 0) {
         accs.splice(idx, 1);
       } else {
-        if (accs.length >= 10) {
-          this.app.notify('Можно надеть максимум 10 аксессуаров!', 'warning');
+        if (accs.length >= 5) {
+          this.app.notify('Можно надеть максимум 5 аур!', 'warning');
           return;
         }
         accs.push(itemId);
@@ -451,16 +386,20 @@ export class ShopManager {
 
     try {
       await this.app.saveUserData({
-        equippedSkin:        data.equippedSkin,
-        equippedBackground:  data.equippedBackground,
-        equippedTrail:       data.equippedTrail,
-        equippedEffect:      data.equippedEffect,
+        equippedSkin: data.equippedSkin,
+        equippedBackground: data.equippedBackground,
+        equippedTrail: data.equippedTrail,
+        equippedEffect: data.equippedEffect,
         equippedAccessories: data.equippedAccessories,
-        clickPower:          data.clickPower
+        clickPower: data.clickPower
       });
 
       if (this.app.gameEngine) {
         this.app.gameEngine.updateMangoSkin();
+        // Обновляем ауры в 3D
+        if (this.app.gameEngine.mango3D) {
+          this.app.gameEngine.mango3D.setAuras(data.equippedAccessories || []);
+        }
         if (this.app.gameEngine.refreshEffects) {
           this.app.gameEngine.refreshEffects();
         }
