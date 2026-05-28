@@ -1,5 +1,4 @@
-// js/shop.js
-import { MANGO_SKINS, UPGRADES, COLLECTIBLES, RARITIES, getItemById } from './items-database.js';
+import { MANGO_SKINS, UPGRADES, COLLECTIBLES, RARITIES, getItemById, getItemMaxCount } from './items-database.js';
 
 export class ShopManager {
   constructor(app) {
@@ -53,9 +52,12 @@ export class ShopManager {
     grid.className = 'item-grid';
 
     items.forEach(item => {
-      const owned = inv.some(i => i.id === item.id);
+      const ownedCount = inv.filter(i => i.id === item.id).reduce((sum, i) => sum + (i.qty || 1), 0);
+      const owned = ownedCount > 0;
       const equipped = this.isEquipped(item);
       const rarity = RARITIES[item.rarity];
+      const maxCount = getItemMaxCount(item);
+      const reachedMaxCount = ownedCount >= maxCount;
 
       const card = document.createElement('div');
       card.className = `item-card rarity-${item.rarity} ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`;
@@ -75,7 +77,15 @@ export class ShopManager {
       if (owned) {
         const badge = document.createElement('span');
         badge.className = 'item-card-badge badge-owned';
-        badge.textContent = '✓ Куплено';
+
+        if (item.type === 'upgrade') {
+          badge.textContent = `✓ x${ownedCount}`;
+        } else if (maxCount === Infinity) {
+          badge.textContent = `✓ x${ownedCount}`;
+        } else {
+          badge.textContent = '✓ Куплено';
+        }
+
         card.appendChild(badge);
       }
 
@@ -108,12 +118,14 @@ export class ShopManager {
 
       const price = document.createElement('div');
       price.className = 'item-card-price';
-      if (owned) {
+
+      if (reachedMaxCount && maxCount !== Infinity) {
         price.style.color = 'var(--success)';
         price.textContent = '✓ В инвентаре';
       } else {
         price.textContent = `🥭 ${this.app.formatNumber(item.price)}`;
       }
+
       card.appendChild(price);
 
       card.addEventListener('click', () => this.showItemDetail(item.id));
@@ -142,14 +154,14 @@ export class ShopManager {
     if (!item) return;
 
     const inv = this.app.userData?.inventory || [];
-    const owned = inv.some(i => i.id === itemId);
+    const ownedCount = inv.filter(i => i.id === itemId).reduce((sum, i) => sum + (i.qty || 1), 0);
+    const owned = ownedCount > 0;
     const equipped = this.isEquipped(item);
     const rarity = RARITIES[item.rarity];
     const canAfford = (this.app.userData?.score || 0) >= item.price;
 
-    // Считаем сколько раз куплен апгрейд
-    const ownedCount = inv.filter(i => i.id === itemId).length;
-    const reachedMaxCount = item.maxCount && ownedCount >= item.maxCount;
+    const maxCount = getItemMaxCount(item);
+    const reachedMaxCount = ownedCount >= maxCount;
 
     const body = document.createElement('div');
     body.style.textAlign = 'center';
@@ -175,7 +187,6 @@ export class ShopManager {
     descEl.textContent = item.description;
     body.appendChild(descEl);
 
-    // Бонусы
     const bonuses = [];
     if (item.clickBonus)              bonuses.push(`💪 Сила клика: +${item.clickBonus}`);
     if (item.effect === 'clickPower') bonuses.push(`💪 Сила клика: +${item.value}`);
@@ -198,17 +209,23 @@ export class ShopManager {
       body.appendChild(bonusBox);
     }
 
-    // Показываем счётчик если апгрейд куплен несколько раз
-    if (item.type === 'upgrade' && ownedCount > 0) {
+    if (owned) {
       const countEl = document.createElement('div');
       countEl.style.cssText = 'margin-top:10px;font-size:13px;color:var(--text-secondary);';
-      countEl.textContent = item.maxCount
-        ? `Куплено: ${ownedCount} / ${item.maxCount}`
-        : `Куплено: ${ownedCount} раз`;
+
+      if (maxCount === Infinity) {
+        countEl.textContent = `В инвентаре: ${ownedCount} шт.`;
+      } else if (item.type === 'upgrade') {
+        countEl.textContent = item.maxCount
+          ? `Куплено: ${ownedCount} / ${item.maxCount}`
+          : `Куплено: ${ownedCount} раз`;
+      } else {
+        countEl.textContent = `В инвентаре: ${ownedCount}`;
+      }
+
       body.appendChild(countEl);
     }
 
-    // Footer
     const footer = document.createElement('div');
     footer.style.cssText = 'display:flex;gap:10px;width:100%;';
 
@@ -218,16 +235,13 @@ export class ShopManager {
     closeBtn.addEventListener('click', () => this.app.closeModal());
     footer.appendChild(closeBtn);
 
-    if (!owned || item.type === 'upgrade') {
-      // Апгрейды можно покупать повторно (если не достигнут лимит)
-      if (!reachedMaxCount) {
-        const buyBtn = document.createElement('button');
-        buyBtn.className = 'btn btn-primary';
-        buyBtn.textContent = `Купить за 🥭 ${this.app.formatNumber(item.price)}`;
-        buyBtn.disabled = !canAfford || this.isPurchasing;
-        buyBtn.addEventListener('click', () => this.buyItem(item.id, buyBtn));
-        footer.appendChild(buyBtn);
-      }
+    if (!reachedMaxCount) {
+      const buyBtn = document.createElement('button');
+      buyBtn.className = 'btn btn-primary';
+      buyBtn.textContent = `Купить за 🥭 ${this.app.formatNumber(item.price)}`;
+      buyBtn.disabled = !canAfford || this.isPurchasing;
+      buyBtn.addEventListener('click', () => this.buyItem(item.id, buyBtn));
+      footer.appendChild(buyBtn);
     }
 
     if (owned && item.type !== 'upgrade' &&
@@ -245,49 +259,41 @@ export class ShopManager {
   }
 
   async buyItem(itemId, buttonEl) {
-    // Защита от двойных кликов
     if (this.isPurchasing) {
       this.app.notify('Подождите, идёт покупка...', 'warning');
       return;
     }
 
-    // ВАЛИДАЦИЯ: предмет должен существовать в базе
     const item = getItemById(itemId);
     if (!item) {
       this.app.notify('Предмет не найден!', 'error');
       return;
     }
 
-    // ВАЛИДАЦИЯ: цена должна быть положительной
     if (typeof item.price !== 'number' || item.price < 0) {
       this.app.notify('Некорректная цена!', 'error');
       return;
     }
 
     const data = this.app.userData;
+    if (!data) return;
 
-    // ВАЛИДАЦИЯ: достаточно очков (серверная цена, не из DOM)
     if (data.score < item.price) {
       this.app.notify('Недостаточно очков!', 'error');
       return;
     }
 
-    // ВАЛИДАЦИЯ: уже куплено (для не-апгрейдов)
-    if (item.type !== 'upgrade' && data.inventory.some(i => i.id === itemId)) {
-      this.app.notify('Уже куплено!', 'warning');
+    const ownedCount = data.inventory
+      .filter(i => i.id === itemId)
+      .reduce((sum, i) => sum + (i.qty || 1), 0);
+
+    const maxCount = getItemMaxCount(item);
+
+    if (ownedCount >= maxCount) {
+      this.app.notify('Достигнут максимум покупок!', 'warning');
       return;
     }
 
-    // ВАЛИДАЦИЯ: лимит покупок апгрейда
-    if (item.type === 'upgrade' && item.maxCount) {
-      const ownedCount = data.inventory.filter(i => i.id === itemId).length;
-      if (ownedCount >= item.maxCount) {
-        this.app.notify(`Достигнут максимум покупок (${item.maxCount})!`, 'warning');
-        return;
-      }
-    }
-
-    // ВАЛИДАЦИЯ: размер инвентаря
     if (data.inventory.length >= 500) {
       this.app.notify('Инвентарь переполнен! Продайте лишнее.', 'error');
       return;
@@ -296,20 +302,18 @@ export class ShopManager {
     this.isPurchasing = true;
     if (buttonEl) buttonEl.disabled = true;
 
-    // Сохраняем старое состояние для отката
     const oldScore = data.score;
     const oldInventory = [...data.inventory];
     const oldStats = {
-      clickPower:    data.clickPower,
-      autoClickRate: data.autoClickRate,
-      maxEnergy:     data.maxEnergy,
-      energyRegen:   data.energyRegen,
-      multiplier:    data.multiplier,
-      critChance:    data.critChance,
+      clickPower:     data.clickPower,
+      autoClickRate:  data.autoClickRate,
+      maxEnergy:      data.maxEnergy,
+      energyRegen:    data.energyRegen,
+      multiplier:     data.multiplier,
+      critChance:     data.critChance,
       critMultiplier: data.critMultiplier
     };
 
-    // Применяем локально
     data.score -= item.price;
     data.inventory.push({ id: itemId, qty: 1, acquiredAt: Date.now() });
 
@@ -319,18 +323,17 @@ export class ShopManager {
 
     try {
       await this.app.saveUserData({
-        score:         data.score,
-        inventory:     data.inventory,
-        clickPower:    data.clickPower,
-        autoClickRate: data.autoClickRate,
-        maxEnergy:     data.maxEnergy,
-        energyRegen:   data.energyRegen,
-        multiplier:    data.multiplier,
-        critChance:    data.critChance,
+        score:          data.score,
+        inventory:      data.inventory,
+        clickPower:     data.clickPower,
+        autoClickRate:  data.autoClickRate,
+        maxEnergy:      data.maxEnergy,
+        energyRegen:    data.energyRegen,
+        multiplier:     data.multiplier,
+        critChance:     data.critChance,
         critMultiplier: data.critMultiplier
       });
 
-      // Обновляем музыку если купили музыкальный предмет
       if (item.type === 'music' && this.app.musicManager) {
         this.app.musicManager.refreshTrack();
       }
@@ -339,7 +342,6 @@ export class ShopManager {
       this.app.closeModal();
       this.render();
     } catch (error) {
-      // ОТКАТ при ошибке сервера
       console.error('Buy error:', error);
       data.score     = oldScore;
       data.inventory = oldInventory;
@@ -371,7 +373,6 @@ export class ShopManager {
         data.energyRegen = Math.min(1000, (data.energyRegen || 2) + safeValue);
         break;
       case 'multiplier':
-        // FIX: защита от умножения на 0
         if (safeValue > 0) {
           data.multiplier = Math.min(10000, (data.multiplier || 1) * safeValue);
         }
@@ -394,7 +395,6 @@ export class ShopManager {
 
     const data = this.app.userData;
 
-    // ВАЛИДАЦИЯ: предмет должен быть в инвентаре
     if (!data.inventory.some(i => i.id === itemId)) {
       this.app.notify('Предмет не в инвентаре!', 'error');
       return;
@@ -402,7 +402,6 @@ export class ShopManager {
 
     let isNowEquipped = false;
 
-    // Сохраняем полный снимок для отката
     const oldData = {
       equippedSkin:         data.equippedSkin,
       equippedBackground:   data.equippedBackground,
@@ -448,7 +447,6 @@ export class ShopManager {
       data.equippedAccessories = accs;
     }
 
-    // Защита clickPower от ухода в минус
     if (data.clickPower < 1) data.clickPower = 1;
 
     try {
@@ -461,7 +459,6 @@ export class ShopManager {
         clickPower:          data.clickPower
       });
 
-      // FIX: обновляем визуал ТОЛЬКО после успешного сохранения
       if (this.app.gameEngine) {
         this.app.gameEngine.updateMangoSkin();
         if (this.app.gameEngine.refreshEffects) {
@@ -473,10 +470,8 @@ export class ShopManager {
       this.app.closeModal();
       this.render();
     } catch (error) {
-      // ОТКАТ
       Object.assign(data, oldData);
       this.app.notify('Ошибка! Попробуйте снова.', 'error');
-      // Восстанавливаем визуал
       if (this.app.gameEngine) this.app.gameEngine.updateMangoSkin();
     }
   }
