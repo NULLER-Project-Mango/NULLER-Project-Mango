@@ -440,3 +440,21 @@ export class ShopManager {
     }
   }
 }
+// js/shop.js - в методе buyItem, после успешного сохранения:
+try {
+  await this.app.saveUserData({
+    // ... существующие поля
+  });
+
+  this.app.notify(`Куплено: ${item.emoji} ${item.name}!`, 'success');
+
+  // ДОБАВИТЬ: обновить музыку если купили музыкальный предмет
+  if (item.type === 'music' && this.app.musicManager) {
+    this.app.musicManager.refreshTrack();
+  }
+
+  this.app.closeModal();
+  this.render();
+} catch (error) {
+  // ... rollback
+}
