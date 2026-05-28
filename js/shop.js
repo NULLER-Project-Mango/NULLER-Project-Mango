@@ -425,6 +425,10 @@ export class ShopManager {
         clickPower: data.clickPower
       });
 
+      // Обновляем визуальные эффекты
+      if (this.app.gameEngine && this.app.gameEngine.refreshEffects) {
+        this.app.gameEngine.refreshEffects();
+      }
       this.app.notify(`${item.emoji} ${isNowEquipped ? 'Надето' : 'Снято'}!`, 'info');
       this.app.closeModal();
       this.render();
