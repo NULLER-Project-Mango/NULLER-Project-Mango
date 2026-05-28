@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mango 3D — Просмотр всех моделей</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 28px 16px 12px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-bottom: 1px solid #333;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      background: linear-gradient(135deg, #ff9800, #ffeb3b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      color: #888;
+      font-size: 14px;
+    }
+
+    /* ── Управление ── */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      flex-wrap: wrap;
+      background: #111;
+      border-bottom: 1px solid #222;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .controls button {
+      padding: 8px 18px;
+      border: 1px solid #444;
+      border-radius: 20px;
+      background: #1a1a2e;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .controls button:hover {
+      background: #2a2a4e;
+      border-color: #666;
+    }
+
+    .controls button.active {
+      background: linear-gradient(135deg, #ff6f00, #ff9800);
+      color: #000;
+      border-color: #ff9800;
+      font-weight: 700;
+    }
+
+    /* ── Сетка ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* ── Карточка модели ── */
+    .model-card {
+      background: #151525;
+      border-radius: 16px;
+      border: 1px solid #2a2a3e;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .model-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(255, 152, 0, 0.15);
+    }
+
+    .model-canvas-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      background: radial-gradient(circle at 50% 45%, #1a1a35, #0a0a18);
+      position: relative;
+    }
+
+    .model-canvas-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .model-info {
+      padding: 14px 18px;
+      border-top: 1px solid #2a2a3e;
+    }
+
+    .model-info .skin-id {
+      font-size: 12px;
+      color: #666;
+      font-family: monospace;
+      margin-bottom: 4px;
+    }
+
+    .model-info .skin-name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .model-info .skin-rarity {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 4px;
+    }
+
+    /* Цвета редкостей */
+    .rarity-common     .skin-rarity { color: #9e9e9e; }
+    .rarity-uncommon   .skin-rarity { color: #66bb6a; }
+    .rarity-rare       .skin-rarity { color: #42a5f5; }
+    .rarity-epic       .skin-rarity { color: #ab47bc; }
+    .rarity-legendary  .skin-rarity { color: #ffa726; }
+    .rarity-mythic     .skin-rarity { color: #ef5350; }
+    .rarity-divine     .skin-rarity { color: #ffee58; }
+    .rarity-cosmic     .skin-rarity { color: #e040fb; }
+
+    .rarity-common     { border-color: #9e9e9e33; }
+    .rarity-uncommon   { border-color: #66bb6a33; }
+    .rarity-rare       { border-color: #42a5f533; }
+    .rarity-epic       { border-color: #ab47bc33; }
+    .rarity-legendary  { border-color: #ffa72644; }
+    .rarity-mythic     { border-color: #ef535044; }
+    .rarity-divine     { border-color: #ffee5844; }
+    .rarity-cosmic     { border-color: #e040fb44; }
+
+    /* ── Большой просмотр ── */
+    .fullscreen-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .fullscreen-overlay.active {
+      display: flex;
+    }
+
+    .fullscreen-canvas-wrap {
+      width: min(80vw, 80vh);
+      height: min(80vw, 80vh);
+    }
+
+    .fullscreen-info {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .fullscreen-info h2 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .fullscreen-close {
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      font-size: 32px;
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .fullscreen-close:hover { opacity: 1; }
+
+    .fullscreen-nav {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .fullscreen-nav button {
+      padding: 10px 28px;
+      border: 1px solid #555;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .fullscreen-nav button:hover {
+      background: #333;
+    }
+
+    /* ── Статус загрузки ── */
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0a0a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 2000;
+      transition: opacity 0.5s;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #333;
+      border-top-color: #ff9800;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      margin-top: 16px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Адаптив ── */
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 14px;
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Загрузка -->
+  <div class="loading-overlay" id="loader">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Загрузка Three.js и моделей...</div>
+  </div>
+
+  <div class="header">
+    <h1>🥭 Mango 3D Viewer</h1>
+    <p>Просмотр всех 3D скинов — кликните на карточку для полного просмотра</p>
+  </div>
+
+  <!-- Фильтр по редкости -->
+  <div class="controls" id="controls">
+    <button class="active" data-filter="all">Все</button>
+    <button data-filter="common">Common</button>
+    <button data-filter="uncommon">Uncommon</button>
+    <button data-filter="rare">Rare</button>
+    <button data-filter="epic">Epic</button>
+    <button data-filter="legendary">Legendary</button>
+    <button data-filter="mythic">Mythic</button>
+    <button data-filter="divine">Divine</button>
+    <button data-filter="cosmic">Cosmic</button>
+  </div>
+
+  <!-- Сетка моделей -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Полноэкранный просмотр -->
+  <div class="fullscreen-overlay" id="fullscreen">
+    <button class="fullscreen-close" id="fs-close">✕</button>
+    <div class="fullscreen-canvas-wrap" id="fs-canvas-wrap"></div>
+    <div class="fullscreen-info">
+      <h2 id="fs-name"></h2>
+      <div id="fs-rarity" style="font-size:13px;text-transform:uppercase;letter-spacing:1.5px;"></div>
+      <div id="fs-id" style="font-size:12px;color:#666;font-family:monospace;margin-top:4px;"></div>
+    </div>
+    <div class="fullscreen-nav">
+      <button id="fs-prev">← Предыдущий</button>
+      <button id="fs-pulse">💥 Клик-импульс</button>
+      <button id="fs-next">Следующий →</button>
+    </div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script type="module">
+    // ─── Импорт класса Mango3D ───
+    import { Mango3D } from './js/mango3d.js';
+
+    // ═══ СПИСОК ВСЕХ СКИНОВ ═══
+    const ALL_SKINS = [
+      // Common
+      { id: 'mango_default',      name: 'Обычное Манго',           rarity: 'common' },
+      { id: 'mango_green',        name: 'Зелёное Манго',           rarity: 'common' },
+      { id: 'mango_small',        name: 'Маленькое Манго',         rarity: 'common' },
+      { id: 'mango_round',        name: 'Круглое Манго',           rarity: 'common' },
+      { id: 'mango_spotted',      name: 'Пятнистое Манго',         rarity: 'common' },
+
+      // Uncommon
+      { id: 'mango_golden_light', name: 'Позолоченное Манго',      rarity: 'uncommon' },
+      { id: 'mango_red',          name: 'Красное Манго',           rarity: 'uncommon' },
+      { id: 'mango_striped',      name: 'Полосатое Манго',         rarity: 'uncommon' },
+      { id: 'mango_neon_green',   name: 'Неоновое Манго',          rarity: 'uncommon' },
+      { id: 'mango_tropical',     name: 'Тропическое Манго',       rarity: 'uncommon' },
+
+      // Rare
+      { id: 'mango_crystal',      name: 'Кристальное Манго',       rarity: 'rare' },
+      { id: 'mango_ice',          name: 'Ледяное Манго',           rarity: 'rare' },
+      { id: 'mango_fire',         name: 'Огненное Манго',          rarity: 'rare' },
+      { id: 'mango_electric',     name: 'Электрическое Манго',     rarity: 'rare' },
+      { id: 'mango_rainbow',      name: 'Радужное Манго',          rarity: 'rare' },
+      { id: 'mango_steampunk',    name: 'Стимпанк Манго',          rarity: 'rare' },
+
+      // Epic
+      { id: 'mango_diamond',      name: 'Алмазное Манго',          rarity: 'epic' },
+      { id: 'mango_plasma',       name: 'Плазменное Манго',        rarity: 'epic' },
+      { id: 'mango_void',         name: 'Манго Пустоты',           rarity: 'epic' },
+      { id: 'mango_cyberpunk',    name: 'Киберпанк Манго',         rarity: 'epic' },
+      { id: 'mango_ancient',      name: 'Древнее Манго',           rarity: 'epic' },
+
+      // Legendary
+      { id: 'mango_golden',       name: 'Золотое Манго',           rarity: 'legendary' },
+      { id: 'mango_galaxy',       name: 'Галактическое Манго',     rarity: 'legendary' },
+      { id: 'mango_dragon',       name: 'Драконье Манго',          rarity: 'legendary' },
+      { id: 'mango_phoenix',      name: 'Манго Феникса',           rarity: 'legendary' },
+
+      // Mythic
+      { id: 'mango_celestial',    name: 'Небесное Манго',          rarity: 'mythic' },
+      { id: 'mango_quantum',      name: 'Квантовое Манго',         rarity: 'mythic' },
+      { id: 'mango_time',         name: 'Манго Времени',           rarity: 'mythic' },
+
+      // Divine
+      { id: 'mango_divine',       name: 'Божественное Манго',      rarity: 'divine' },
+      { id: 'mango_eternal',      name: 'Вечное Манго',            rarity: 'divine' },
+
+      // Cosmic
+      { id: 'mango_cosmic',       name: 'Космическое Манго',       rarity: 'cosmic' },
+      { id: 'mango_singularity',  name: 'Сингулярность',           rarity: 'cosmic' },
+    ];
+
+    const RARITY_COLORS = {
+      common:    '#9e9e9e',
+      uncommon:  '#66bb6a',
+      rare:      '#42a5f5',
+      epic:      '#ab47bc',
+      legendary: '#ffa726',
+      mythic:    '#ef5350',
+      divine:    '#ffee58',
+      cosmic:    '#e040fb',
+    };
+
+    // ═══ СОСТОЯНИЕ ═══
+    const instances = new Map();   // id → Mango3D
+    let filteredSkins = [...ALL_SKINS];
+    let fullscreenInstance = null;
+    let fullscreenIndex = 0;
+
+    // ═══ РЕНДЕР СЕТКИ ═══
+    function renderGrid(filter = 'all') {
+      // Удаляем старые инстансы
+      instances.forEach(inst => inst.destroy());
+      instances.clear();
+
+      filteredSkins = filter === 'all'
+        ? [...ALL_SKINS]
+        : ALL_SKINS.filter(s => s.rarity === filter);
+
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+
+      filteredSkins.forEach((skin, index) => {
+        const card = document.createElement('div');
+        card.className = `model-card rarity-${skin.rarity}`;
+        card.style.cursor = 'pointer';
+
+        const canvasId = `canvas-${skin.id}`;
+
+        card.innerHTML = `
+          <div class="model-canvas-wrap" id="${canvasId}"></div>
+          <div class="model-info">
+            <div class="skin-id">${skin.id}</div>
+            <div class="skin-name">${skin.name}</div>
+            <div class="skin-rarity">${skin.rarity}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => openFullscreen(index));
+        grid.appendChild(card);
+
+        // Создаём 3D инстанс с небольшой задержкой
+        setTimeout(() => {
+          const inst = new Mango3D(canvasId);
+          inst.currentSkinId = skin.id;
+          inst.init().catch(err => console.error(`Error init ${skin.id}:`, err));
+          instances.set(skin.id, inst);
+        }, index * 80); // stagger для плавности
+      });
+    }
+
+    // ═══ ПОЛНОЭКРАННЫЙ ПРОСМОТР ═══
+    function openFullscreen(index) {
+      fullscreenIndex = index;
+      const skin = filteredSkins[index];
+      if (!skin) return;
+
+      const overlay = document.getElementById('fullscreen');
+      overlay.classList.add('active');
+
+      document.getElementById('fs-name').textContent = skin.name;
+      document.getElementById('fs-rarity').textContent = skin.rarity;
+      document.getElementById('fs-rarity').style.color = RARITY_COLORS[skin.rarity];
+      document.getElementById('fs-id').textContent = skin.id;
+
+      // Уничтожаем старый
+      if (fullscreenInstance) {
+        fullscreenInstance.destroy();
+        fullscreenInstance = null;
+      }
+
+      const wrap = document.getElementById('fs-canvas-wrap');
+      wrap.innerHTML = '';
+
+      // Создаём div для canvas
+      const fsCanvasDiv = document.createElement('div');
+      fsCanvasDiv.id = 'fs-3d-container';
+      fsCanvasDiv.style.width = '100%';
+      fsCanvasDiv.style.height = '100%';
+      wrap.appendChild(fsCanvasDiv);
+
+      fullscreenInstance = new Mango3D('fs-3d-container');
+      fullscreenInstance.currentSkinId = skin.id;
+      fullscreenInstance.init();
+    }
+
+    function closeFullscreen() {
+      document.getElementById('fullscreen').classList.remove('active');
+      if (fullscreenInstance) {
+        fullscreenInstance.destroy();
+        fullscreenInstance = null;
+      }
+    }
+
+    function navigateFullscreen(delta) {
+      fullscreenIndex += delta;
+      if (fullscreenIndex < 0) fullscreenIndex = filteredSkins.length - 1;
+      if (fullscreenIndex >= filteredSkins.length) fullscreenIndex = 0;
+      openFullscreen(fullscreenIndex);
+    }
+
+    // ═══ СОБЫТИЯ ═══
+
+    // Фильтр
+    document.getElementById('controls').addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      renderGrid(e.target.dataset.filter);
+    });
+
+    // Полноэкранные кнопки
+    document.getElementById('fs-close').addEventListener('click', closeFullscreen);
+    document.getElementById('fs-prev').addEventListener('click', () => navigateFullscreen(-1));
+    document.getElementById('fs-next').addEventListener('click', () => navigateFullscreen(1));
+    document.getElementById('fs-pulse').addEventListener('click', () => {
+      if (fullscreenInstance) fullscreenInstance.pulse();
+    });
+
+    // ESC / стрелки
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('fullscreen').classList.contains('active')) return;
+      if (e.key === 'Escape') closeFullscreen();
+      if (e.key === 'ArrowLeft') navigateFullscreen(-1);
+      if (e.key === 'ArrowRight') navigateFullscreen(1);
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (fullscreenInstance) fullscreenInstance.pulse();
+      }
+    });
+
+    // Клик по overlay для закрытия
+    document.getElementById('fullscreen').addEventListener('click', (e) => {
+      if (e.target.id === 'fullscreen') closeFullscreen();
+    });
+
+    // ═══ СТАРТ ═══
+    function start() {
+      renderGrid('all');
+
+      // Скрываем загрузчик
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('hidden');
+      }, 1200);
+    }
+
+    // Ждём Three.js
+    if (window.THREE) {
+      start();
+    } else {
+      // Three.js грузится через <script> выше
+      const checkThree = setInterval(() => {
+        if (window.THREE) {
+          clearInterval(checkThree);
+          start();
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>
